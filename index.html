@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>匿名留言板</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background: #fafafa;
+    padding: 20px;
+    margin: 0;
+  }
+  h1 {
+    text-align: center;
+  }
+  .container {
+    max-width: 600px;
+    margin: auto;
+  }
+  textarea {
+    width: 100%;
+    height: 120px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    resize: vertical;
+    font-size: 16px;
+  }
+  button {
+    width: 100%;
+    padding: 12px;
+    background: #222;
+    color: #fff;
+    border: none;
+    margin-top: 10px;
+    border-radius: 6px;
+    font-size: 16px;
+  }
+  .msg {
+    background: #fff;
+    border-left: 4px solid #333;
+    padding: 12px;
+    margin: 15px 0;
+    border-radius: 4px;
+    word-break: break-word;
+  }
+</style>
+</head>
+<body>
+<h1>匿名留言板</h1>
+<div class="container">
+  <textarea id="input" placeholder="写点什么，不会记录身份..."></textarea>
+  <button onclick="postMsg()">提交</button>
+
+  <div id="list"></div>
+</div>
+
+<script>
+  function load() {
+    const data = localStorage.getItem("msgs");
+    return data ? JSON.parse(data) : [];
+  }
+
+  function save(arr) {
+    localStorage.setItem("msgs", JSON.stringify(arr));
+  }
+
+  function render() {
+    const list = document.getElementById("list");
+    const msgs = load();
+    list.innerHTML = msgs
+      .map(m => `<div class='msg'>${m}</div>`)
+      .join("");
+  }
+
+  function postMsg() {
+    const text = document.getElementById("input").value.trim();
+    if (!text) return;
+    const msgs = load();
+    msgs.unshift(text);
+    save(msgs);
+    document.getElementById("input").value = "";
+    render();
+  }
+
+  render();
+</script>
+</body>
+</html>
