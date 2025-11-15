@@ -1,5 +1,3 @@
-# MathProof
-
 - [Overiew](./overview.md)
 - [Porf 1](./prof1.md)
 - [Porf 2](./prof2.md)
