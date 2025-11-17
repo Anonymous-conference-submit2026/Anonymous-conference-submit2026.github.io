@@ -1,3 +1,4 @@
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 # Theorem 2 — Polynomial Approximation of the Accuracy Functional  
 
 In this section, we establish that the accuracy functional arising from structured pruning can be uniformly approximated by finite‑order bivariate polynomials.  

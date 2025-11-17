@@ -1,3 +1,4 @@
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 # **Proposition 4（Gradient Gap Between Attention and Activation）**
 
 Under the standard Vision Transformer assumptions A1–A4 (softmax concentration, bounded feature/weight norms, large hidden dimension, and multi‑head averaging), the back‑propagated gradients satisfy

@@ -1,3 +1,4 @@
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 # Theorem 1 — Well‑Posedness of the Pruning‑Ratio Optimization Problem  
 This section gives a formal mathematical foundation for the pruning‑ratio optimization problem introduced in *Stage 1: Identification of Redundant Layers*. 
 We rigorously characterize the feasible solution space and establish the existence of a globally optimal pruning configuration.

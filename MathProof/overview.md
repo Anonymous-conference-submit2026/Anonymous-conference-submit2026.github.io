@@ -1,3 +1,4 @@
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 # Overall Theoretical Foundation for MAP‑Based Pruning‑Ratio Optimization
 
 The three theorems collectively establish a complete mathematical foundation for our pruning‑ratio optimization framework.  The logic proceeds in three progressive steps, corresponding to Theorem 1–3.

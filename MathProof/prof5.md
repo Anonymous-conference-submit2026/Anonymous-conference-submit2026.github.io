@@ -1,3 +1,4 @@
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 # **Proposition 5（Activation‑Layer Pruning Causes Larger but More Recoverable Accuracy Drop）**
 
 Consider the residual‑branch structure
