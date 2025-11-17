@@ -37,7 +37,7 @@ $$
 \tilde m_g = \frac{\|\hat m_g\|_0}{L}.
 $$
 
-Since the numerators range from $0$ to $L$,  
+Since the numerators range from $$0$$ to $$L$$,  
 $$
 \tilde m_a,\tilde m_g \in \Bigl\{0,\tfrac1L,\dots,1\Bigr\}.
 $$
