@@ -1,90 +1,169 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>匿名留言板</title>
+<title>BoundaryDPT: Project Overview</title>
+
 <style>
-  body {
-    font-family: Arial, sans-serif;
-    background: #fafafa;
-    padding: 20px;
-    margin: 0;
-  }
-  h1 {
-    text-align: center;
-  }
-  .container {
-    max-width: 600px;
-    margin: auto;
-  }
-  textarea {
-    width: 100%;
-    height: 120px;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    resize: vertical;
-    font-size: 16px;
-  }
-  button {
-    width: 100%;
-    padding: 12px;
-    background: #222;
-    color: #fff;
-    border: none;
-    margin-top: 10px;
-    border-radius: 6px;
-    font-size: 16px;
-  }
-  .msg {
-    background: #fff;
-    border-left: 4px solid #333;
-    padding: 12px;
-    margin: 15px 0;
-    border-radius: 4px;
-    word-break: break-word;
-  }
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        color: #222;
+        background: #fafafa;
+        line-height: 1.6;
+    }
+
+    header {
+        background: #111;
+        color: white;
+        padding: 40px 20px;
+        text-align: center;
+    }
+
+    header h1 {
+        margin: 0;
+        font-size: 2rem;
+        font-weight: 700;
+    }
+
+    section {
+        padding: 30px 20px;
+        max-width: 900px;
+        margin: auto;
+    }
+
+    h2 {
+        border-left: 4px solid #0070f3;
+        padding-left: 10px;
+        margin-top: 40px;
+        font-size: 1.6rem;
+    }
+
+    .img-block {
+        margin: 20px 0;
+        text-align: center;
+    }
+
+    img {
+        width: 100%;
+        max-width: 700px;
+        border-radius: 6px;
+        background: white;
+        box-shadow: 0 0 10px rgba(0,0,0,0.05);
+    }
+
+    footer {
+        margin-top: 50px;
+        padding: 20px;
+        text-align: center;
+        color: #666;
+    }
+
+    @media (max-width: 600px) {
+        h1 { font-size: 1.7rem; }
+        h2 { font-size: 1.3rem; }
+    }
 </style>
+
 </head>
+
 <body>
-<h1>匿名留言板</h1>
-<div class="container">
-  <textarea id="input" placeholder="写点什么，不会记录身份..."></textarea>
-  <button onclick="postMsg()">提交</button>
 
-  <div id="list"></div>
-</div>
+<header>
+    <h1>BoundaryDPT: Pushing the Boundaries of Depth Pruning for Vision Transformers</h1>
+</header>
 
-<script>
-  function load() {
-    const data = localStorage.getItem("msgs");
-    return data ? JSON.parse(data) : [];
-  }
+<section>
+    <h2>🌟 Key Observations</h2>
+    <p>
+        BoundaryDPT is motivated by two core phenomena we discovered inside Vision Transformers:
+    </p>
 
-  function save(arr) {
-    localStorage.setItem("msgs", JSON.stringify(arr));
-  }
+    <ul>
+        <li><b>Gradient Disparity</b>: Activation layers and attention layers exhibit significantly different gradient magnitudes, causing biased importance estimation.</li>
+        <li><b>Recovery Asymmetry</b>: Activation-layer pruning initially destroys accuracy more severely, yet recovers much faster during fine-tuning than attention-layer pruning.</li>
+        <li><b>Dimension Mismatch Problem</b>: Joint depth pruning of attention + MLP linear layers causes tensor shape inconsistency, preventing naïve pruning from working.</li>
+    </ul>
 
-  function render() {
-    const list = document.getElementById("list");
-    const msgs = load();
-    list.innerHTML = msgs
-      .map(m => `<div class='msg'>${m}</div>`)
-      .join("");
-  }
+    <div class="img-block">
+        <img src="fig/Pareto.svg" alt="Pareto Frontier" />
+    </div>
 
-  function postMsg() {
-    const text = document.getElementById("input").value.trim();
-    if (!text) return;
-    const msgs = load();
-    msgs.unshift(text);
-    save(msgs);
-    document.getElementById("input").value = "";
-    render();
-  }
+    <div class="img-block">
+        <img src="fig/Gradient_Disparity.svg" alt="Gradient Disparity" />
+    </div>
 
-  render();
-</script>
+    <div class="img-block">
+        <img src="fig/Recovery_Asymmetry.svg" alt="Recovery Asymmetry" />
+    </div>
+
+    <div class="img-block">
+        <img src="fig/depth_vs_width_pruning.svg" alt="Depth vs Width" />
+    </div>
+
+    <div class="img-block">
+        <img src="fig/dim_mismatch.svg" alt="Dimension Mismatch" />
+    </div>
+
+    <div class="img-block">
+        <img src="fig/vit_latency.svg" alt="Layer Latency Distribution" />
+    </div>
+</section>
+
+<section>
+    <h2>🚀 Method: BoundaryDPT</h2>
+    <p>
+        BoundaryDPT is a three‑stage depth pruning framework that jointly prunes self‑attention layers
+        and activation function layers—while resolving the dimension mismatch problem. 
+        We introduce:
+    </p>
+
+    <ul>
+        <li><b>MAP-based pruning ratio determination</b> — modeling ViT accuracy drop via a polynomial predictor.</li>
+        <li><b>Training-based redundant layer identification</b> — eliminating cross-type bias caused by gradient disparity.</li>
+        <li><b>MLP merging mechanism</b> — removing activation layers to allow safe merging of linear layers, reducing ViT depth.</li>
+    </ul>
+
+    <div class="img-block">
+        <img src="fig/overview.svg" alt="Method Overview" />
+    </div>
+
+    <div class="img-block">
+        <img src="fig/pipeline.svg" alt="Pipeline" />
+    </div>
+</section>
+
+<section>
+    <h2>📈 Experimental Results</h2>
+    <p>
+       BoundaryDPT achieves **state-of-the-art depth pruning** on DeiT-S/B and outperforms both
+       width pruning and previous depth pruning methods. Combined with width pruning
+       (BoundaryDPT+), it sets new records in extreme ViT compression.
+    </p>
+
+    <div class="img-block">
+        <img src="fig/speedup_accuracy_comparison_combined.svg" alt="Speedup vs Accuracy Combined" />
+    </div>
+
+    <div class="img-block">
+        <img src="fig/speedup_acc_curve_small.svg" alt="Speedup Accuracy Curve Small" />
+    </div>
+
+    <div class="img-block">
+        <img src="fig/speedup_acc_curve_base.svg" alt="Speedup Accuracy Curve Base" />
+    </div>
+
+    <p>
+        BoundaryDPT improves depth pruning robustness and enables new Pareto‑optimal
+        accuracy‑speed tradeoffs for Vision Transformers.
+    </p>
+</section>
+
+<footer>
+    © 2025 BoundaryDPT Project
+</footer>
+
 </body>
 </html>
