@@ -1,4 +1,5 @@
 <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
 # Theorem 3 — Noise from Subset-based Fast Finetuning Is Averaged Out, Ensuring MAP Provides a Consistent Approximation of the True Functional
 
 This section establishes that although subset-based fast finetuning introduces a constant bias and random noise, such perturbations do not alter the functional structure learned by MAP. In particular, the constant bias can be absorbed into the functional definition, and the random noise vanishes in expectation as the number of sampled pruning ratios increases. Consequently, MAP remains a consistent estimator of the true accuracy functional up to an additive constant, preserving all optimality decisions.
