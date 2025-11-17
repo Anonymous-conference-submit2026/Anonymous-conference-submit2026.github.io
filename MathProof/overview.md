@@ -1,4 +1,13 @@
+<div>
+<script>
+window.MathJax = {
+  tex: {
+    displayMath: [['$$','$$'], ['\\[','\\]']]
+  }
+};
+</script>
 <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</div>
 
 # Overall Theoretical Foundation for MAP‑Based Pruning‑Ratio Optimization
 

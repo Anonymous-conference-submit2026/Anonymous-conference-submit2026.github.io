@@ -1,4 +1,13 @@
+<div>
+<script>
+window.MathJax = {
+  tex: {
+    displayMath: [['$$','$$'], ['\\[','\\]']]
+  }
+};
+</script>
 <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</div>
 
 # Theorem 3 — Noise from Subset-based Fast Finetuning Is Averaged Out, Ensuring MAP Provides a Consistent Approximation of the True Functional
 

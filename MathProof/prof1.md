@@ -1,4 +1,13 @@
+<div>
+<script>
+window.MathJax = {
+  tex: {
+    displayMath: [['$$','$$'], ['\\[','\\]']]
+  }
+};
+</script>
 <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</div>
 
 # Theorem 1 — Well‑Posedness of the Pruning‑Ratio Optimization Problem  
 This section gives a formal mathematical foundation for the pruning‑ratio optimization problem introduced in *Stage 1: Identification of Redundant Layers*. 
@@ -12,10 +21,7 @@ A Vision Transformer (ViT) contains
 - an attention layer and  
 - an activation layer  
 
-at each of the 
-$$
-L
-$$
+at each of the $$L$$
 depth‑ordered positions.
 
 Pruning decisions are encoded by binary vectors
