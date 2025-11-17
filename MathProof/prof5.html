@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Proposition 5 — Activation-Layer Pruning Effects</title>
+
+<!-- MathJax 配置：行内 \( \)，块级 $$ -->
+<script>
+window.MathJax = {
+  tex: {
+    inlineMath: [['\\(','\\)']],
+    displayMath: [['$$','$$'], ['\\[','\\]']]
+  }
+};
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+<style>
+body {
+  max-width: 900px;
+  margin: auto;
+  padding: 20px;
+  font-size: 18px;
+  line-height: 1.7;
+}
+h1, h2, h3 {
+  margin-top: 40px;
+}
+hr { margin: 40px 0; }
+</style>
+
+</head>
+<body>
+
+<h1><b>Proposition 5（Activation‑Layer Pruning Causes Larger but More Recoverable Accuracy Drop）</b></h1>
+
+<p>
+Consider the residual‑branch structure:
+</p>
+
+$$
+x_{l+1}
+= x_l
++ \mathcal{F}^2_{\theta_l}
+\circ \mathcal{G}
+\circ \mathcal{F}^1_{\theta_l}(x_l),
+$$
+
+<p>where:</p>
+<ul>
+  <li>\(\mathcal{F}^1, \mathcal{F}^2\) are linear projections,</li>
+  <li>\(\mathcal{G}\) is an activation module (e.g., GELU),</li>
+  <li>gradients satisfy Proposition 4:</li>
+</ul>
+
+$$
+\|\nabla_{\mathrm{gelu}}\|=\Theta(1),\qquad
+\|\nabla_{\mathrm{attn}}\| = O(10^{-3}\!\sim10^{-2}).
+$$
+
+<p>
+Then <b>pruning activation layers yields (i) a larger immediate accuracy drop, but (ii) significantly faster recovery during fine‑tuning</b>.
+</p>
+
+<hr>
+
+<h1><b>Proof</b></h1>
+
+<p>We show two claims:  
+(1) the activation path dominates representational power → pruning it hurts more;  
+(2) its gradient scale is large → recovery is fast.
+</p>
+
+<h2><b>Claim 1. Activation layers contribute a larger share of the residual branch output</b></h2>
+
+<p>
+Define:
+</p>
+
+$$
+R_l(x_l) = \mathcal{F}^2_{\theta_l} \circ \mathcal{G} \circ \mathcal{F}^1_{\theta_l}(x_l).
+$$
+
+<p>
+By bounded norms of \(\mathcal{F}^1,\mathcal{F}^2\) and nonlinear amplification:
+</p>
+
+$$
+\|R_l(x_l)\| = \Theta(1).
+$$
+
+<p>
+In contrast, the attention branch is attenuated (softmax + \(1/\sqrt d\)):
+</p>
+
+$$
+\|R_l^{\mathrm{attn}}(x_l)\| = O(10^{-1}\!\sim10^{-2}).
+$$
+
+<p>
+Thus the activation branch contributes a <b>dominant portion</b> of the residual mapping:
+</p>
+
+$$
+\Delta_{\text{acc}}^{\mathrm{activation}} 
+\gg 
+\Delta_{\text{acc}}^{\mathrm{attn}}.
+$$
+
+<p><b>This explains the larger accuracy drop.</b></p>
+
+<hr>
+
+<h2><b>Claim 2. Activation layers recover faster because their gradients are 1–2 orders larger</b></h2>
+
+<p>Let the pruned parameters be \(\theta^{(\mathrm{pruned})}\) and update step:</p>
+
+$$
+\Delta\theta_t
+= -\eta \nabla_{\theta} \mathcal{L}_t.
+$$
+
+<p>From Proposition 4:</p>
+
+$$
+\|\nabla_{\mathrm{gelu}}\|=\Theta(1), 
+\qquad
+\|\nabla_{\mathrm{attn}}\| = O(10^{-3}\!\sim10^{-2}),
+$$
+
+<p>Hence:</p>
+
+$$
+\|\Delta\theta_t^{\mathrm{gelu}}\|
+= \Theta(\eta),
+\qquad
+\|\Delta\theta_t^{\mathrm{attn}}\|
+= O(10^{-3}\eta).
+$$
+
+<p>Therefore:</p>
+
+<ul>
+  <li>activation layers receive <b>full‑scale gradients</b>,</li>
+  <li>attention layers receive <b>tiny gradients</b>,</li>
+</ul>
+
+<p>yielding:</p>
+
+$$
+\frac{\|\Delta\theta_t^{\mathrm{gelu}}\|}
+{\|\Delta\theta_t^{\mathrm{attn}}\|}
+= \Omega(10^{1}\!-\!10^{2}).
+$$
+
+<p>
+Thus activation parameters <b>recover 10–100× faster</b>, explaining their easier fine‑tuning.
+</p>
+
+<hr>
+
+<h1><b>Conclusion</b></h1>
+
+<p><b>Activation‑layer pruning:</b></p>
+<ul>
+  <li>removes a <b>functionally dominant</b> residual component → <b>large instant accuracy drop</b>,</li>
+  <li>but benefits from <b>large unattenuated gradients</b> → <b>rapid recovery</b>.</li>
+</ul>
+
+<p><b>Attention‑layer pruning:</b></p>
+<ul>
+  <li>removes a <b>weaker</b> component → <b>small instant drop</b>,</li>
+  <li>but receives <b>tiny gradients</b> → <b>slow recovery</b>.</li>
+</ul>
+
+<p>
+This establishes that activation layers are <b>highly impactful but highly recoverable</b>,  
+in contrast to attention layers.
+</p>
+
+</body>
+</html>

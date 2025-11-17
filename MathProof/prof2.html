@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Theorem 2 — Polynomial Approximation of the Accuracy Functional</title>
+
+<!-- MathJax 配置：行内用 \( \)，块级用 $$ -->
+<script>
+window.MathJax = {
+  tex: {
+    inlineMath: [['\\(','\\)']],
+    displayMath: [['$$','$$'], ['\\[','\\]']]
+  }
+};
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+<style>
+body {
+  max-width: 900px;
+  margin: auto;
+  padding: 20px;
+  font-size: 18px;
+  line-height: 1.7;
+}
+h1, h2 {
+  margin-top: 40px;
+}
+hr {
+  margin: 40px 0;
+}
+</style>
+</head>
+
+<body>
+
+<h1>Theorem 2 — Polynomial Approximation of the Accuracy Functional</h1>
+
+<p>
+In this section, we establish that the accuracy functional arising from structured pruning 
+can be uniformly approximated by finite‑order bivariate polynomials.
+</p>
+
+<hr>
+
+<h2>Preliminaries</h2>
+
+<p>Let</p>
+
+$$
+\mathcal D=\{0,\tfrac{1}{L},\dots,1\}^2 \subset [0,1]^2
+$$
+
+<p>
+denote the discrete set of admissible pruning ratios.  
+The accuracy functional evaluated at these ratios is denoted
+</p>
+
+$$
+\mathcal P:\mathcal D\to\mathbb R.
+$$
+
+<p>
+We assume that \(\mathcal P\) admits a continuous extension
+</p>
+
+$$
+\tilde{\mathcal P}:[0,1]^2\to\mathbb R,
+\qquad
+\tilde{\mathcal P}|_{\mathcal D}=\mathcal P.
+$$
+
+<h3>1.1 Justification of the Continuity Assumption</h3>
+
+<p>This assumption is natural and well‑motivated for two reasons.</p>
+
+<ol>
+  <li>
+    <b>Intermediate pruning ratios as relaxed constraints.</b>
+    Although structured pruning decisions are discrete, any intermediate pruning ratio
+    $$
+    (\tilde m_a,\tilde m_g)\in[0,1]^2
+    $$
+    can be interpreted as a continuous relaxation akin to unstructured pruning.
+    Continuous sparsity relaxations are standard in pruning theory, and model performance
+    typically varies smoothly with respect to the imposed sparsity level.
+  </li>
+
+  <li>
+    <b>Empirically observed smoothness in one‑dimensional pruning.</b>
+    When pruning is restricted to one dimension:
+    $$
+    (\tilde m_a,0)
+    \quad\text{or}\quad
+    (0,\tilde m_g),
+    $$
+    empirical results show that validation accuracy evolves <b>smoothly</b> with the pruning ratio.
+    This strongly suggests a smooth two‑dimensional accuracy surface.
+  </li>
+</ol>
+
+<p>
+These considerations jointly justify modeling the accuracy surface 
+as a continuous mapping on \([0,1]^2\).
+</p>
+
+<hr>
+
+<h2>Lemma 1 — Compactness and Regularity of the Domain</h2>
+
+<p><b>Lemma.</b>  
+The domain \([0,1]^2\) is a compact Hausdorff space.</p>
+
+<p><b>Proof.</b>  
+Each interval \([0,1]\) is compact and Hausdorff.  
+Products of compact Hausdorff spaces remain compact and Hausdorff.  
+Thus \([0,1]^2\) satisfies the topological assumptions required 
+for the Stone–Weierstrass theorem.
+</p>
+
+<hr>
+
+<h2>Lemma 2 — Polynomial Algebra as a Separating Lattice</h2>
+
+<p><b>Lemma.</b> Let</p>
+
+$$
+A = \mathbb R[x,y]
+$$
+
+<p>
+be the algebra of all finite‑order real polynomials in two variables.  
+Then \(A\) is a separating lattice that contains constants.
+</p>
+
+<p><b>Proof.</b></p>
+
+<ol>
+  <li>
+    <b>Point separation.</b>  
+    For distinct points \((x_1,y_1)\neq(x_2,y_2)\),  
+    $$
+    p(x,y)=x \quad\text{or}\quad p(x,y)=y
+    $$
+    separates the two points.
+  </li>
+
+  <li>
+    <b>Contains constants.</b>  
+    The constant function \(1\) belongs to \(A\).
+  </li>
+
+  <li>
+    <b>Lattice property.</b>  
+    For any \(a,b\in A\),
+    $$
+    \max(a,b)=\frac{a+b}{2}+\frac{|a-b|}{2},\qquad
+    \min(a,b)=\frac{a+b}{2}-\frac{|a-b|}{2}.
+    $$
+    The function \(|a-b|\) can be uniformly approximated on \([0,1]^2\) by polynomials.  
+    Thus the uniform closure of \(A\) is closed under max and min.
+  </li>
+</ol>
+
+<p>Therefore, \(A\) satisfies all algebraic and lattice requirements.</p>
+
+<hr>
+
+<h2>Theorem 2 — Uniform Approximation of the Accuracy Functional</h2>
+
+<p><b>Theorem.</b>  
+Let \(\tilde{\mathcal P}\in C([0,1]^2)\).  
+Then for every \(\varepsilon>0\),  
+there exists a polynomial 
+</p>
+
+$$
+Q(x,y)\in\mathbb R[x,y]
+$$
+
+<p>such that</p>
+
+$$
+\sup_{(x,y)\in[0,1]^2}
+|\tilde{\mathcal P}(x,y)-Q(x,y)|
+<\varepsilon.
+$$
+
+<p>In particular,</p>
+
+$$
+\max_{(\tilde m_a,\tilde m_g)\in\mathcal D}
+|\mathcal P(\tilde m_a,\tilde m_g)-Q(\tilde m_a,\tilde m_g)|
+<\varepsilon.
+$$
+
+<hr>
+
+<h2>Proof of Theorem 2</h2>
+
+<p><b>Proof.</b>  
+By Lemma 1, the domain \([0,1]^2\) is compact and Hausdorff.  
+By Lemma 2, the polynomial algebra  
+\(A=\mathbb R[x,y]\)  
+is a separating lattice containing constants.
+</p>
+
+<p>
+Thus all hypotheses of the Stone–Weierstrass theorem (lattice version) are satisfied.
+Therefore,
+</p>
+
+$$
+\overline{A} = C([0,1]^2)
+$$
+
+<p>
+where \(\overline{A}\) denotes the uniform closure of \(A\).
+Hence for every \(\varepsilon>0\), 
+there exists a polynomial \(Q\in A\) such that
+</p>
+
+$$
+\sup_{(x,y)\in[0,1]^2}
+|\tilde{\mathcal P}(x,y)-Q(x,y)|
+<\varepsilon.
+$$
+
+<p>
+Since \(\mathcal D\subset[0,1]^2\),  
+the same uniform bound holds on \(\mathcal D\):
+</p>
+
+$$
+\max_{(\tilde m_a,\tilde m_g)\in\mathcal D}
+|\mathcal P(\tilde m_a,\tilde m_g)-Q(\tilde m_a,\tilde m_g)|
+<\varepsilon.
+$$
+
+<p>
+Therefore, the accuracy functional can be uniformly approximated over all feasible pruning configurations by a finite‑degree bivariate polynomial.
+</p>
+
+<hr>
+
+<h2>Remark</h2>
+
+<p>
+This theorem provides a rigorous mathematical justification for polynomial‑based 
+surrogate modeling (e.g., MAP) in pruning‑ratio optimization.  
+In particular, it ensures that the empirical accuracy surface can be captured 
+with arbitrarily small uniform error.
+</p>
+
+</body>
+</html>

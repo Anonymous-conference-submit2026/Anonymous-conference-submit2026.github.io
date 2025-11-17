@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+
+<title>Overall Theoretical Foundation for MAP‑Based Pruning‑Ratio Optimization</title>
+
+<!-- MathJax 配置：行内用 \( \)，块级用 $$ -->
+<script>
+window.MathJax = {
+  tex: {
+    inlineMath: [['\\(','\\)']],
+    displayMath: [['$$','$$'], ['\\[','\\]']]
+  }
+};
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+<style>
+body {
+  max-width: 900px;
+  margin: auto;
+  padding: 20px;
+  font-size: 18px;
+  line-height: 1.7;
+}
+h1, h2 {
+  margin-top: 40px;
+}
+hr {
+  margin: 40px 0;
+}
+</style>
+</head>
+
+<body>
+
+<h1>Overall Theoretical Foundation for MAP‑Based Pruning‑Ratio Optimization</h1>
+
+<p>
+The three theorems collectively establish a complete mathematical foundation for our pruning‑ratio optimization framework.  
+The logic proceeds in three progressive steps, corresponding to Theorem 1–3.
+</p>
+
+<hr>
+
+<h2>1. Existence of a Discrete Accuracy Functional and Exhaustive Optimization (Theorem 1)</h2>
+
+<p>
+We first formalize the relationship between pruning ratios and model accuracy as a functional
+</p>
+
+$$
+\mathcal P:\mathcal D\to\mathbb R,
+$$
+
+<p>
+whose domain
+</p>
+
+$$
+\mathcal D=\{0,\tfrac1L,\dots,1\}^2
+$$
+
+<p>
+contains a finite number of admissible pruning configurations.  
+Under a fixed pruning budget, the feasible subset remains finite, and thus \(\mathcal P\) must attain its maximum on this domain.  
+Therefore, the pruning‑ratio optimization problem is <b>well‑posed</b>, and the optimal pruning configuration <b>always exists</b> and can be found by enumeration.  
+The full proof is provided in <a href="./prof1.html">Theorem 1</a>.
+</p>
+
+<hr>
+
+<h2>2. Continuous Relaxation and Polynomial Approximation (Theorem 2)</h2>
+
+<p>
+Although \(\mathcal D\) is discrete, empirical and theoretical considerations suggest that accuracy varies smoothly with pruning ratios.  
+Thus we relax the domain to the continuous square
+</p>
+
+$$
+(\tilde m_a,\tilde m_g)\in[0,1]^2,
+$$
+
+<p>
+and assume \(\mathcal P\) admits a continuous extension.
+</p>
+
+<p>
+Applying the Stone–Weierstrass theorem, any continuous functional on \([0,1]^2\) can be <b>uniformly approximated</b> by a finite‑degree bivariate polynomial:
+</p>
+
+$$
+Q(x,y)\in \mathbb R[x,y].
+$$
+
+<p>
+This establishes that MAP—implemented as a polynomial‑like parametric model—can in principle approximate the accuracy surface arbitrarily well.  
+The full proof is provided in <a href="./prof2.html">Theorem 2</a>.
+</p>
+
+<hr>
+
+<h2>3. Robustness of MAP Under Noisy Subset-based Fast Finetuning (Theorem 3)</h2>
+
+<p>
+The accuracies used to train MAP are obtained via subset-based fast finetuning and satisfy
+</p>
+
+$$
+\widehat{\mathcal P}=\mathcal P + b + \varepsilon,
+$$
+
+<p>where:</p>
+<ul>
+  <li>\(b\) is a constant bias (few finetuning epochs),</li>
+  <li>\(\varepsilon\) is zero‑mean noise with finite variance.</li>
+</ul>
+
+<p>
+We show that:
+</p>
+
+<ol>
+  <li><b>The constant bias does not affect the optimal pruning decision</b>, since adding a constant does not change an argmax.</li>
+  <li><b>The random noise vanishes as sample size grows</b>, by the Weak Law of Large Numbers.</li>
+</ol>
+
+<p>
+Thus MAP converges (in probability) to
+</p>
+
+$$
+\mathcal P + b,
+$$
+
+<p>
+which is a harmless vertical shift of the true functional.
+</p>
+
+<p>
+Therefore, MAP remains a statistically consistent surrogate for the accuracy functional, even when trained from noisy fast‑finetuning data.  
+The full proof is provided in <a href="./prof3.html">Theorem 3</a>.
+</p>
+
+<hr>
+
+<h1>Conclusion</h1>
+
+<p>Theorems 1–3 justify our method:</p>
+
+<ol>
+  <li>The accuracy surface over pruning ratios defines a finite-domain functional with guaranteed optimal solutions.</li>
+  <li>After a natural continuous relaxation, the functional is uniformly approximable by finite-degree polynomials.</li>
+  <li>Subset-based noisy estimates still allow MAP to consistently approximate the true functional and recover optimal pruning choices.</li>
+</ol>
+
+<p>
+These theoretical results validate MAP as a reliable and efficient surrogate for pruning‑ratio optimization.
+</p>
+
+<hr>
+
+<h1>Additional Notes</h1>
+
+<p>
+Here are two supplementary explanations related to gradient disparity and recovery asymmetry, detailed in  
+<a href="./prof4.html">Proof 4</a> and <a href="./prof5.html">Proof 5</a>.
+</p>
+
+</body>
+</html>

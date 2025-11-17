@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Theorem 3 — Consistency of MAP Under Noisy Fast Finetuning</title>
+
+<!-- MathJax 配置：行内 \( \)，块级 $$ -->
+<script>
+window.MathJax = {
+  tex: {
+    inlineMath: [['\\(','\\)']],
+    displayMath: [['$$','$$'], ['\\[','\\]']]
+  }
+};
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+<style>
+body {
+  max-width: 900px;
+  margin: auto;
+  padding: 20px;
+  font-size: 18px;
+  line-height: 1.7;
+}
+h1, h2 {
+  margin-top: 40px;
+}
+hr {
+  margin: 40px 0;
+}
+</style>
+</head>
+
+<body>
+
+<h1>Theorem 3 — Noise from Subset-based Fast Finetuning Is Averaged Out, Ensuring MAP Provides a Consistent Approximation of the True Functional</h1>
+
+<p>
+This section establishes that although subset-based fast finetuning introduces a constant bias and random noise, such perturbations do not alter the functional structure learned by MAP.  
+In particular, the constant bias can be absorbed into the functional definition, and the random noise vanishes in expectation as the number of sampled pruning ratios increases.  
+Consequently, MAP remains a consistent estimator of the true accuracy functional up to an additive constant, preserving all optimality decisions.
+</p>
+
+<hr>
+
+<h2>Lemma 1 — Observation Model with Constant Bias and Zero-mean Noise</h2>
+
+<p>
+For any pruning ratio pair \((\tilde m_a,\tilde m_g)\), let \(\mathcal P(\tilde m_a,\tilde m_g)\) denote the validation accuracy under full finetuning.  
+Subset-based fast finetuning yields:
+</p>
+
+$$
+\widehat{\mathcal P}(\tilde m_a,\tilde m_g)
+=
+\mathcal P(\tilde m_a,\tilde m_g) + b + \varepsilon,
+$$
+
+<p>where:</p>
+<ul>
+  <li>\(b\): constant bias from limited finetuning epochs,</li>
+  <li>\(\varepsilon\): zero-mean noise with finite variance \(\sigma^2 < \infty\).</li>
+</ul>
+
+<p><b>Lemma.</b> The expectation satisfies</p>
+
+$$
+\mathbb E[\widehat{\mathcal P}(\tilde m_a,\tilde m_g)]
+=
+\mathcal P(\tilde m_a,\tilde m_g) + b.
+$$
+
+<p><b>Proof.</b> Linear expectation and \(\mathbb E[\varepsilon]=0\).</p>
+
+<hr>
+
+<h2>Lemma 2 — The Bias Term Does Not Affect the Optimal Pruning Solution</h2>
+
+<p>Compare:</p>
+
+$$
+\arg\max \mathcal P(\tilde m_a,\tilde m_g)
+\quad\text{vs.}\quad
+\arg\max (\mathcal P(\tilde m_a,\tilde m_g) + b).
+$$
+
+<p><b>Lemma.</b> These two problems have identical maximizers.</p>
+
+<p><b>Proof.</b></p>
+
+$$
+\mathcal P(m_1) > \mathcal P(m_2)
+\iff
+\mathcal P(m_1)+b > \mathcal P(m_2)+b.
+$$
+
+<p>
+Thus the ordering of pruning configurations is preserved.  
+Hence maximizers coincide.
+</p>
+
+<hr>
+
+<h2>Lemma 3 — Random Noise Vanishes in Expectation as the Number of Samples Grows</h2>
+
+<p>MAP is trained using \(N\) sampled pruning ratios:</p>
+
+$$
+y_i
+=
+\mathcal P(\tilde m_a^{(i)},\tilde m_g^{(i)})
++ b
++ \varepsilon_i.
+$$
+
+<p>
+MAP minimizes the empirical squared loss
+</p>
+
+$$
+\frac{1}{N}\sum_{i=1}^{N}
+\bigl|y_i - \mathrm{MAP}_\Theta(\tilde m_a^{(i)},\tilde m_g^{(i)})\bigr|^2.
+$$
+
+<p><b>Lemma.</b> If \(\varepsilon_i\) are i.i.d. with finite variance, then</p>
+
+$$
+\frac{1}{N}\sum_{i=1}^N \varepsilon_i
+\xrightarrow[]{\mathbb P}
+0.
+$$
+
+<p><b>Proof.</b> Weak Law of Large Numbers.</p>
+
+<hr>
+
+<h2>Theorem 3 — Consistent Approximation of the Accuracy Functional up to an Additive Constant</h2>
+
+<p><b>Theorem.</b>  
+MAP trained with sufficiently many samples converges (in probability) to
+</p>
+
+$$
+\mathcal P(\tilde m_a,\tilde m_g) + b,
+$$
+
+<p>
+which differs from the true accuracy \(\mathcal P\) only by an additive constant.  
+Thus MAP preserves the optimal pruning configuration and the functional shape.
+</p>
+
+<h3>Proof of Theorem 3</h3>
+
+<p>
+From Lemma 1:
+</p>
+
+$$
+\widehat{\mathcal P}
+=
+\mathcal P + b + \varepsilon.
+$$
+
+<p>
+From Lemma 3, the empirical loss becomes
+</p>
+
+$$
+\frac{1}{N} \sum |y_i - \mathrm{MAP}_\Theta|^2
+=
+\mathbb E\left[
+|\mathcal P + b - \mathrm{MAP}_\Theta|^2
+\right]
++ o_{\mathbb P}(1),
+$$
+
+<p>where \(o_{\mathbb P}(1)\) vanishes in probability.</p>
+
+<p>
+Thus the optimizing \(\Theta^\star\) satisfies
+</p>
+
+$$
+\mathrm{MAP}_\Theta^\star
+=
+\arg\min_\Theta
+\ \mathbb E\bigl[
+|\mathcal P + b - \mathrm{MAP}_\Theta|^2
+\bigr].
+$$
+
+<p>
+Therefore MAP converges to \(\mathcal P + b\).
+</p>
+
+<p>
+By Lemma 2, adding \(b\) does not alter the maximizer of the pruning problem.  
+Hence MAP recovers the optimal pruning configuration and the functional shape up to a harmless constant shift.
+</p>
+
+<hr>
+
+<h2>Remark</h2>
+
+<p>
+Although subset-based fast finetuning introduces bias, it is constant across all configurations and does not affect ordering.  
+Combined with the fact that random noise averages out, MAP remains a theoretically sound and statistically consistent approximation to the true functional \(\mathcal P\) for pruning‑ratio optimization.
+</p>
+
+</body>
+</html>

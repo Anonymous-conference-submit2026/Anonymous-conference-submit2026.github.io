@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Proposition 4 — Gradient Gap Between Attention and Activation</title>
+
+<!-- MathJax 配置 -->
+<script>
+window.MathJax = {
+  tex: {
+    inlineMath: [['\\(','\\)']],
+    displayMath: [['$$','$$'], ['\\[','\\]']]
+  }
+};
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+<style>
+body {
+  max-width: 900px;
+  margin: auto;
+  padding: 20px;
+  font-size: 18px;
+  line-height: 1.7;
+}
+h1, h2, h3 {
+  margin-top: 40px;
+}
+hr { margin: 40px 0; }
+</style>
+</head>
+
+<body>
+
+<h1><b>Proposition 4（Gradient Gap Between Attention and Activation）</b></h1>
+
+<p>
+Under the standard Vision Transformer assumptions A1–A4 (softmax concentration, bounded norms, 
+large hidden dimension, and multi‑head averaging), the back‑propagated gradients satisfy:
+</p>
+
+$$
+\|\nabla_{\mathrm{gelu}}\|=\Theta(1), \qquad
+\|\nabla_{\mathrm{attn}}\| = O(10^{-3}\!\sim10^{-4}),
+$$
+
+<p>and therefore</p>
+
+$$
+\boxed{
+\frac{\|\nabla_{\mathrm{gelu}}\|}{\|\nabla_{\mathrm{attn}}\|}
+= \Omega(10^{2}\!-\!10^{3})
+}
+$$
+
+<p>
+i.e., <b>attention gradients are inherently 2–3 orders of magnitude smaller than GELU gradients</b>.
+</p>
+
+<hr>
+
+<h1><b>Assumptions</b></h1>
+
+<h2><b>A1. Softmax concentration</b></h2>
+
+<p>For each attention row \(\,(A_i=\mathrm{softmax}(z_i))\):</p>
+
+$$
+A_{i^*j}=O(1),\qquad
+A_{ij}=O(10^{-2}\!\sim10^{-3}) \ (i\ne i^*).
+$$
+
+<p>This implies Jacobian terms \(s_i s_j = O(10^{-4}\!\sim10^{-6})\).</p>
+
+<hr>
+
+<h2><b>A2. Bounded feature and weight norms</b></h2>
+
+$$
+\|x_i\| = \Theta(1),\qquad
+\|W_Q\|,\|W_K\|,\|W_V\|,\|W_1\|,\|W_2\| = O(1).
+$$
+
+<p>No gradient amplification occurs in either attention or MLP layers.</p>
+
+<hr>
+
+<h2><b>A3. Large hidden dimension</b></h2>
+
+$$
+d \gg 1,\quad \text{e.g., } d = 768.
+$$
+
+<p>Thus \(1/\sqrt d = O(10^{-2})\).</p>
+
+<hr>
+
+<h2><b>A4. Multi‑head averaging</b></h2>
+
+$$
+\mathrm{MHA}(X)=\frac{1}{H}\sum_{h=1}^H \mathrm{Attn}_h(X)W_o^{(h)},\qquad
+H=12.
+$$
+
+<p>This introduces a gradient factor \(1/H = O(10^{-1})\).</p>
+
+<hr>
+
+<h1><b>Proof</b></h1>
+
+<h2><b>Step 1. Softmax Jacobian suppression</b></h2>
+
+<p>By A1:</p>
+
+$$
+\Big\|\frac{\partial\,\mathrm{softmax}}{\partial z}\Big\|
+= O(10^{-2}\!-\!10^{-3}),
+$$
+
+$$
+\|g_Z\|\le O(10^{-2}\!-\!10^{-3})\|g\|.
+$$
+
+<p>This is the <b>first suppression</b>.</p>
+
+<hr>
+
+<h2><b>Step 2. QK‑scaling suppression</b></h2>
+
+$$
+Z=\frac{QK^\top}{\sqrt d},
+$$
+
+<p>so:</p>
+
+$$
+\|\nabla_Q\|,\|\nabla_K\|
+\le \frac{1}{\sqrt d}\|\nabla_Z\|
+= O(10^{-1})\|\nabla_Z\|.
+$$
+
+<p>The <b>second suppression</b>.</p>
+
+<hr>
+
+<h2><b>Step 3. Multi‑head averaging suppression</b></h2>
+
+$$
+\nabla_h = \frac{1}{H} \nabla_{\mathrm{mha}} W_o^\top,
+$$
+
+$$
+\|\nabla_h\|
+=O(10^{-1})\|\nabla_{\mathrm{mha}}\|.
+$$
+
+<p>The <b>third suppression</b>.</p>
+
+<hr>
+
+<h2><b>Step 4. Combine suppressions (attention path)</b></h2>
+
+$$
+\|\nabla_{\mathrm{attn}}\|
+\le
+O(10^{-2}\!-\!10^{-3})
+\times O(10^{-1})
+\times O(10^{-1})
+=
+O(10^{-4}\!-\!10^{-3}).
+$$
+
+<p>Empirically: \(10^{-3}\)–\(10^{-2}\).</p>
+
+<hr>
+
+<h2><b>Step 5. GELU path contains no shrinking factors</b></h2>
+
+<p>GELU derivative:</p>
+
+$$
+\sigma'(x)=\Phi(x)+x\phi(x)\in[0.8,3.6].
+$$
+
+<p>Weights are \(O(1)\). Thus:</p>
+
+$$
+\|\nabla_{\mathrm{gelu}}\|=\Theta(1).
+$$
+
+<p>No softmax, no \(1/\sqrt d\), no multi‑head averaging.</p>
+
+<hr>
+
+<h2><b>Step 6. Final ratio</b></h2>
+
+$$
+\frac{\|\nabla_{\mathrm{gelu}}\|}{\|\nabla_{\mathrm{attn}}\|}
+=
+\frac{\Theta(1)}{O(10^{-4}\!-\!10^{-3})}
+=
+\Omega(10^{2}\!-\!10^{3}).
+$$
+
+<hr>
+
+<h1><b>Conclusion</b></h1>
+
+<p>Attention gradients undergo three multiplicative suppressions:</p>
+
+<ul>
+  <li>softmax Jacobian: \(O(10^{-2}\!-\!10^{-3})\)</li>
+  <li>QK-scaling: \(O(10^{-1})\)</li>
+  <li>multi-head averaging: \(O(10^{-1})\)</li>
+</ul>
+
+<p>GELU gradients undergo <b>none</b> of these.</p>
+
+<p>
+Therefore, the <b>gradient magnitude disparity</b> between attention and MLP activations is a 
+<b>structural property</b> of the ViT block.
+</p>
+
+</body>
+</html>

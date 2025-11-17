@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Theorem 1 — Well‑Posedness of the Pruning‑Ratio Optimization Problem</title>
+
+<!-- MathJax 配置：行内用 \( \)，块级用 $$ -->
+<script>
+window.MathJax = {
+  tex: {
+    inlineMath: [['\\(','\\)']],
+    displayMath: [['$$','$$'], ['\\[','\\]']]
+  }
+};
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+<style>
+body {
+  max-width: 900px;
+  margin: auto;
+  padding: 20px;
+  font-size: 18px;
+  line-height: 1.7;
+}
+h1, h2, h3 {
+  margin-top: 40px;
+}
+hr {
+  margin: 40px 0;
+}
+</style>
+
+</head>
+<body>
+
+<!-- ============================ 内容开始 =============================== -->
+
+<h1>Theorem 1 — Well‑Posedness of the Pruning‑Ratio Optimization Problem</h1>
+
+<p>
+This section gives a formal mathematical foundation for the pruning‑ratio optimization problem introduced in <i>Stage 1: Identification of Redundant Layers</i>.  
+We rigorously characterize the feasible solution space and establish the existence of a globally optimal pruning configuration.
+</p>
+
+<hr>
+
+<h2>Preliminaries</h2>
+
+<p>
+A Vision Transformer (ViT) contains
+</p>
+
+<ul>
+  <li>an attention layer and</li>
+  <li>an activation layer</li>
+</ul>
+
+<p>at each of the \(L\) depth‑ordered positions.</p>
+
+<p>
+Pruning decisions are encoded by binary vectors
+</p>
+
+$$
+\hat m_a,\,\hat m_g \in \{0,1\}^L,
+$$
+
+<p>where entry \(1\) indicates that the corresponding layer is removed and entry \(0\) indicates it is preserved.</p>
+
+<p>The pruning ratios are defined by</p>
+
+$$
+\tilde m_a = \frac{\|\hat m_a\|_0}{L},
+\qquad
+\tilde m_g = \frac{\|\hat m_g\|_0}{L}.
+$$
+
+<p>
+Since the numerators range from \(0\) to \(L\),
+</p>
+
+$$
+\tilde m_a,\tilde m_g \in \Bigl\{0,\tfrac1L,\dots,1\Bigr\}.
+$$
+
+<p>
+Define the discrete pruning‑ratio domain
+</p>
+
+$$
+\mathcal D=\{(i/L,j/L):0\le i,j\le L\},
+\qquad |\mathcal D|=(L+1)^2.
+$$
+
+<hr>
+
+<h2>Lemma 1 — Finiteness of the Feasible Domain</h2>
+
+<p><b>Lemma.</b> The pruning‑ratio domain \(\mathcal D\) is a finite set.</p>
+
+<p><b>Proof.</b> By construction,</p>
+
+$$
+\mathcal D=\{(i/L,j/L):i,j\in\{0,1,\dots,L\}\},
+$$
+
+<p>
+which contains exactly \((L+1)^2\) elements.  
+Hence \(\mathcal D\) is finite.
+</p>
+
+<hr>
+
+<h2>Lemma 2 — Well‑Defined Accuracy Functional on the Discrete Domain</h2>
+
+<p><b>Lemma.</b>  
+The validation accuracy produced by the <i>pruning → finetuning → evaluation</i> pipeline defines a function
+</p>
+
+$$
+\mathcal P:\mathcal D\to\mathbb R,
+$$
+
+<p>which is well‑defined and computable on every point of \(\mathcal D\).</p>
+
+<p><b>Proof.</b>  
+Each \((\tilde m_a,\tilde m_g)\in\mathcal D\) corresponds to a realizable pruning configuration because both ratios derive from binary vectors in \(\{0,1\}^L\).  
+Running the pipeline yields a single deterministic validation accuracy, which is a real number.  
+Thus \(\mathcal P\) is well‑defined on \(\mathcal D\) and computable.
+</p>
+
+<hr>
+
+<h2>Lemma 3 — Finiteness of the Constrained Feasible Set</h2>
+
+<p>
+A pruning budget \(k\) is imposed by the linear constraint
+</p>
+
+$$
+\tilde m_a+\tilde m_g=\frac{k}{L}.
+$$
+
+<p>Define the constrained feasible set:</p>
+
+$$
+\mathcal D_k
+=
+\Bigl\{(\tilde m_a,\tilde m_g)\in\mathcal D:
+\tilde m_a+\tilde m_g=\tfrac{k}{L}\Bigr\}.
+$$
+
+<p><b>Lemma.</b>  
+\(\mathcal D_k\) is a finite set with
+</p>
+
+$$
+|\mathcal D_k| \le L+1.
+$$
+
+<p><b>Proof.</b>  
+The equality constraint uniquely determines \(j = k-i\) for each \(i\in\{0,\dots,L\}\), resulting in at most \(L+1\) feasible pairs.  
+Thus \(\mathcal D_k\) is finite.
+</p>
+
+<hr>
+
+<h2>Theorem 1 — Existence of an Optimal Pruning Configuration</h2>
+
+<p><b>Theorem.</b>  
+For any pruning budget \(k\), the optimization problem
+</p>
+
+$$
+(\tilde m_a^\star,\tilde m_g^\star)
+=
+\underset{(\tilde m_a,\tilde m_g)\in\mathcal D_k}{\arg\max}\,
+\mathcal P(\tilde m_a,\tilde m_g)
+$$
+
+<p>admits at least one optimal solution.</p>
+
+<h3>Proof of Theorem 1</h3>
+
+<p><b>Proof.</b>  
+By Lemma 3, \(\mathcal D_k\) is a finite set.  
+By Lemma 2, \(\mathcal P:\mathcal D_k\to\mathbb R\) is a real‑valued function defined on this finite domain.
+</p>
+
+<p>
+A real‑valued function on a finite set always attains its maximum; therefore,
+</p>
+
+$$
+\exists\,(\tilde m_a^\star,\tilde m_g^\star)\in\mathcal D_k
+\quad\text{s.t.}\quad
+\mathcal P(\tilde m_a^\star,\tilde m_g^\star)
+=
+\max_{(\tilde m_a,\tilde m_g)\in\mathcal D_k}
+\mathcal P(\tilde m_a,\tilde m_g).
+$$
+
+<p>
+Thus the pruning‑ratio optimization problem is well‑posed and always has an optimal solution.
+</p>
+
+<hr>
+
+<h2>Remark</h2>
+
+<p>
+Since \(|\mathcal D_k|\le L+1\), the feasible domain is trivially enumerable.  
+Thus the maximizer of \(\mathcal P\) can be obtained via direct search once the MAP (Model Accuracy Predictor) or empirical evaluation pipeline provides \(\mathcal P(\cdot)\) values.
+</p>
+
+<p>
+This establishes the mathematical validity of the optimization step used in <i>Stage 1</i> of the method.
+</p>
+
+<!-- ============================ 内容结束 =============================== -->
+
+</body>
+</html>
