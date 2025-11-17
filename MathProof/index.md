@@ -4,4 +4,4 @@
 - [Porf 3](./prof3.md)
 - [Porf 4](./prof4.md)
 - [Porf 5](./prof5.md)
-- [Test](./test.md)
+- [Test](./test.html)
