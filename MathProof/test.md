@@ -4,7 +4,7 @@ layout: default
 
 # Test
 
-Inline: $x^2$
+Inline: \(x^2\)
 
 Block:
 
