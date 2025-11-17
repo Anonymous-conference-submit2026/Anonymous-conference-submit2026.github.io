@@ -12,7 +12,7 @@ A Vision Transformer (ViT) contains
 - an attention layer and  
 - an activation layer  
 
-at each of the $L$ depth‑ordered positions.
+at each of the $$L$$ depth‑ordered positions.
 
 Pruning decisions are encoded by binary vectors
 $$
