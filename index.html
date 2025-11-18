@@ -39,6 +39,13 @@
         padding-left: 10px;
         margin-top: 40px;
         font-size: 1.6rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    h2 .icon {
+        font-size: 1.5rem;
     }
 
     .img-block {
@@ -75,29 +82,29 @@
     <h1>BoundaryDPT: Pushing the Boundaries of Depth Pruning for Vision Transformers</h1>
 </header>
 
-<section>
-    <h2>🌟 Key Observations</h2>
+<!-- ===================== 1. OVERVIEW ===================== -->
+<section id="overview">
+    <h2><span class="icon">📘</span>1. Overview</h2>
     <p>
-        BoundaryDPT is motivated by two core phenomena we discovered inside Vision Transformers:
+        BoundaryDPT is a new depth pruning framework for Vision Transformers (ViTs). It jointly prunes 
+        self-attention layers and activation function layers while avoiding the dimension mismatch 
+        problem that traditionally makes depth pruning unstable and inaccurate.
     </p>
-
-    <ul>
-        <li><b>Gradient Disparity</b>: Activation layers and attention layers exhibit significantly different gradient magnitudes, causing biased importance estimation.</li>
-        <li><b>Recovery Asymmetry</b>: Activation-layer pruning initially destroys accuracy more severely, yet recovers much faster during fine-tuning than attention-layer pruning.</li>
-        <li><b>Dimension Mismatch Problem</b>: Joint depth pruning of attention + MLP linear layers causes tensor shape inconsistency, preventing naïve pruning from working.</li>
-    </ul>
 
     <div class="img-block">
         <img src="fig/Pareto.svg" alt="Pareto Frontier" />
     </div>
+</section>
 
-    <div class="img-block">
-        <img src="fig/Gradient_Disparity.svg" alt="Gradient Disparity" />
-    </div>
-
-    <div class="img-block">
-        <img src="fig/Recovery_Asymmetry.svg" alt="Recovery Asymmetry" />
-    </div>
+<!-- ===================== 2. MOTIVATION ===================== -->
+<section id="motivation">
+    <h2><span class="icon">🎯</span>2. Motivation</h2>
+    <p>
+        Depth pruning provides significantly higher speedup than width pruning. However, previous 
+        depth pruning techniques often cause severe accuracy drops. Our goal is to understand the 
+        structural challenges inside ViTs and design a method that fully unlocks the potential of 
+        depth pruning while maintaining accuracy.
+    </p>
 
     <div class="img-block">
         <img src="fig/depth_vs_width_pruning.svg" alt="Depth vs Width" />
@@ -112,18 +119,49 @@
     </div>
 </section>
 
-<section>
-    <h2>🚀 Method: BoundaryDPT</h2>
+<!-- ===================== 3. KEY OBSERVATIONS ===================== -->
+<section id="key-observations">
+    <h2><span class="icon">🔍</span>3. Key Observations</h2>
+
     <p>
-        BoundaryDPT is a three‑stage depth pruning framework that jointly prunes self‑attention layers
-        and activation function layers—while resolving the dimension mismatch problem. 
-        We introduce:
+        Our analysis reveals two hidden but fundamental challenges inside ViTs:
+    </p>
+
+    <h3>• Gradient Disparity</h3>
+    <p>
+        Activation layers and attention layers have very different gradient magnitudes, which causes 
+        gradient-based pruning methods to be heavily biased.
+    </p>
+
+    <div class="img-block">
+        <img src="fig/Gradient_Disparity.svg" alt="Gradient Disparity" />
+    </div>
+
+    <h3>• Recovery Asymmetry</h3>
+    <p>
+        Activation-layer pruning initially produces large accuracy drops but recovers extremely fast. 
+        Attention-layer pruning behaves in the opposite way.
+    </p>
+
+    <div class="img-block">
+        <img src="fig/Recovery_Asymmetry.svg" alt="Recovery Asymmetry" />
+    </div>
+
+</section>
+
+<!-- ===================== 4. METHOD ===================== -->
+<section id="method">
+    <h2><span class="icon">🧩</span>4. Method: BoundaryDPT</h2>
+
+    <p>
+        BoundaryDPT is a three-stage depth pruning framework that addresses gradient disparity, 
+        recovery asymmetry, and dimension mismatch. The pipeline consists of:
     </p>
 
     <ul>
-        <li><b>MAP-based pruning ratio determination</b> — modeling ViT accuracy drop via a polynomial predictor.</li>
-        <li><b>Training-based redundant layer identification</b> — eliminating cross-type bias caused by gradient disparity.</li>
-        <li><b>MLP merging mechanism</b> — removing activation layers to allow safe merging of linear layers, reducing ViT depth.</li>
+        <li><b>MAP-based pruning ratio determination</b> — predicts accuracy for different combinations of pruned attention/activation layers.</li>
+        <li><b>Training-based redundant layer identification</b> — avoids biased importance ranking across different layer types.</li>
+        <li><b>Activation-layer removal + MLP merging</b> — safely reduces depth without breaking tensor shapes.</li>
     </ul>
 
     <div class="img-block">
@@ -133,14 +171,16 @@
     <div class="img-block">
         <img src="fig/pipeline.svg" alt="Pipeline" />
     </div>
+
 </section>
 
-<section>
-    <h2>📈 Experimental Results</h2>
+<!-- ===================== 5. EXPERIMENTAL RESULTS ===================== -->
+<section id="results">
+    <h2><span class="icon">📈</span>5. Experimental Results</h2>
+
     <p>
-       BoundaryDPT achieves **state-of-the-art depth pruning** on DeiT-S/B and outperforms both
-       width pruning and previous depth pruning methods. Combined with width pruning
-       (BoundaryDPT+), it sets new records in extreme ViT compression.
+        BoundaryDPT achieves state-of-the-art depth pruning results on DeiT-S and DeiT-B, and when 
+        combined with width pruning (BoundaryDPT+), it sets new benchmarks for extreme ViT compression.
     </p>
 
     <div class="img-block">
@@ -156,9 +196,10 @@
     </div>
 
     <p>
-        BoundaryDPT improves depth pruning robustness and enables new Pareto‑optimal
-        accuracy‑speed tradeoffs for Vision Transformers.
+        BoundaryDPT consistently improves the robustness and efficiency of ViT depth pruning, 
+        achieving Pareto-optimal tradeoffs between accuracy and speed.
     </p>
+
 </section>
 
 <footer>
