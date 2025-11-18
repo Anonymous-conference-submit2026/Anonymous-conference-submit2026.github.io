@@ -139,7 +139,7 @@
     <strong>Depth pruning and its limitation.</strong> Depth pruning removes entire ViT layers and offers much higher speedups than width pruning under the same sparsity. However, aggressive layer removal often causes severe accuracy degradation. As a result, depth–width hybrid methods are also constrained by the weakness of depth pruning.
     </p>
     <div class="img-block">
-         <div class="img-title"><strong>Our Method Push the Pareto Frontier of ViT Compression</strong></div>
+         <div class="img-title"><strong>Depth Pruning Delivers Higher Speedups under Equivalent Sparsity Budgets</strong></div>
         <img src="fig/depth_vs_width_pruning.svg" alt="Depth vs Width" />
     </div>
 
@@ -149,97 +149,316 @@
     <strong>Joint depth pruning matters.</strong> Contrary to the common belief that accuracy collapse comes from coarse pruning granularity, our analysis shows the real issue is the lack of <em>joint</em> pruning that accounts for cross‑layer heterogeneity. Pruning only attention layers or only activation layers causes large accuracy drops, while pruning them jointly maintains accuracy and efficiency.
     </p>
 
-
-    <div class="img-block">
-        <img src="fig/vit_latency.svg" alt="Layer Latency Distribution" />
+<div class="img-row" style="display: flex; gap: 20px; justify-content: center; margin: 25px 0;">
+    
+    <!-- Left: DeiT-Small -->
+    <div class="img-block" style="flex: 1;">
+        <div class="img-title" style="text-align: center; font-weight: 600; margin-bottom: 8px;">
+            Speedup vs. Acc (DeiT‑Small)
+        </div>
+        <img src="fig/speedup_acc_curve_small.svg" alt="Speedup Accuracy Curve Small" />
     </div>
+
+    <!-- Right: DeiT-Base -->
+    <div class="img-block" style="flex: 1;">
+        <div class="img-title" style="text-align: center; font-weight: 600; margin-bottom: 8px;">
+            Speedup vs. Acc (DeiT‑Base)
+        </div>
+        <img src="fig/speedup_acc_curve_base.svg" alt="Speedup Accuracy Curve Base" />
+    </div>
+
+</div>
+
     <p>
 
     <strong>Dimension mismatch hinders joint pruning.</strong> Linear layers and attention layers dominate ViT latency, so pruning them together is essential. Yet, removing them independently breaks tensor shapes and leads to dimension mismatch (e.g., FFN linear layers no longer align with surrounding attention blocks), making joint depth‑pruned models invalid.
     </p>
 
     <div class="img-block">
+        <div class="img-title"><strong>Linear and Attention Layers Are The Most Time-consuming Layers in ViTs</strong></div>
+        <img src="fig/vit_latency.svg" alt="Layer Latency Distribution" />
+    </div>
+
+    <div class="img-block">
+        <div class="img-title"><strong>Direct removing Linear Layers May Create Dimension Mismatch</strong></div>
         <img src="fig/dim_mismatch.svg" alt="Dimension Mismatch" />
     </div>
 </section>
 
 <!-- ===================== 3. KEY OBSERVATIONS ===================== -->
-<section id="key-observations">
-    <h2><span class="icon">🔍</span>3. Key Observations</h2>
+<section id="observations">
+    <h2><span class="icon">🔍</span>3. Key Observations on Heterogeneity</h2>
 
     <p>
-        Our analysis reveals two hidden but fundamental challenges inside ViTs:
+        Pruning attention layers and activation function layers jointly is non‑trivial because these two
+        components behave very differently during backpropagation and fine‑tuning. Conventional pruning
+        metrics—whether gradient‑based or handcrafted—often fail to capture this cross‑layer heterogeneity.
+        We summarize two key observations that reveal the root difficulty of joint depth pruning in ViTs.
     </p>
 
-    <h3>• Gradient Disparity</h3>
+    <!-- Observation 1 -->
+    <h3>• Observation 1: Gradient Disparity</h3>
     <p>
-        Activation layers and attention layers have very different gradient magnitudes, which causes 
-        gradient-based pruning methods to be heavily biased.
+        Attention layers and activation function layers exhibit large differences in gradient magnitude
+        during backpropagation. When importance scores are learned through training, activation layers
+        consistently show much higher gradients than attention layers, leading to biased importance
+        estimation if gradient‑based metrics are used.
+        This gradient gap persists even after multiple epochs.
     </p>
 
     <div class="img-block">
+        <div class="img-title"><strong>Gradient Disparity Between Layer Types</strong></div>
         <img src="fig/Gradient_Disparity.svg" alt="Gradient Disparity" />
     </div>
 
-    <h3>• Recovery Asymmetry</h3>
     <p>
-        Activation-layer pruning initially produces large accuracy drops but recovers extremely fast. 
-        Attention-layer pruning behaves in the opposite way.
+        <strong>Challenge:</strong> Gradient‑based pruning metrics or methods fail because attention layers are
+        systematically undervalued and therefore incorrectly pruned.
+    </p>
+
+    <!-- Observation 2 -->
+    <h3>• Observation 2: Recovery Asymmetry</h3>
+    <p>
+        The two layer types also show drastically different accuracy recovery behaviors. Pruning attention
+        layers causes mild initial accuracy drops but requires long fine‑tuning to recover. In contrast,
+        pruning activation function layers triggers severe accuracy collapse (often over 90%) but recovers
+        very quickly during fine‑tuning. After 10 epochs of recovery, both layer types return to similar
+        accuracy levels.
     </p>
 
     <div class="img-block">
+        <div class="img-title"><strong>Recovery Asymmetry After Pruning</strong></div>
         <img src="fig/Recovery_Asymmetry.svg" alt="Recovery Asymmetry" />
     </div>
 
+    <p>
+        <strong>Challenge:</strong> Handcrafted or single‑step pruning metrics cannot model this asymmetric
+        behavior and therefore make suboptimal joint pruning decisions.
+    </p>
+
+    <p>
+        These two heterogeneity observations highlight why joint depth pruning is difficult and directly
+        motivate the design of <strong>BoundaryDPT</strong>, which addresses both challenges through separate
+        pruning statistic collection and training‑based layer selection.
+    </p>
 </section>
 
 <!-- ===================== 4. METHOD ===================== -->
 <section id="method">
     <h2><span class="icon">🧩</span>4. Method: BoundaryDPT</h2>
 
-    <p>
-        BoundaryDPT is a three-stage depth pruning framework that addresses gradient disparity, 
-        recovery asymmetry, and dimension mismatch. The pipeline consists of:
-    </p>
-
-    <ul>
-        <li><b>MAP-based pruning ratio determination</b> — predicts accuracy for different combinations of pruned attention/activation layers.</li>
-        <li><b>Training-based redundant layer identification</b> — avoids biased importance ranking across different layer types.</li>
-        <li><b>Activation-layer removal + MLP merging</b> — safely reduces depth without breaking tensor shapes.</li>
-    </ul>
-
 
     <div class="img-block">
         <img src="fig/pipeline.svg" alt="Pipeline" />
     </div>
+
+    <p>
+    <strong>BoundaryDPT</strong> is a three‑stage pruning framework designed to jointly prune attention layers and activation function layers in Vision Transformers. Unlike conventional depth pruning, which often collapses accuracy, BoundaryDPT resolves key heterogeneity issues—gradient disparity and recovery asymmetry—while ensuring the pruned model remains structurally valid and computationally efficient.
+</p>
+
+<h3>• Stage 1: Identifying Redundant Layers</h3>
+<p>
+    The first stage determines how many attention layers and activation layers should be pruned. 
+    To achieve this, BoundaryDPT uses a lightweight <strong>Model Accuracy Predictor (MAP)</strong> that estimates the accuracy of different pruning configurations.  
+    By collecting data through a fast iterative prune‑and‑finetune procedure and fitting a polynomial predictor, MAP efficiently searches the pruning space.
+</p>
+
+<p>
+    After determining pruning ratios, BoundaryDPT performs a <strong>training‑based layer importance evaluation</strong>. Each candidate layer receives a learnable importance parameter, which is refined through backpropagation. Layers with the lowest importance within each layer type are removed.  
+    Crucially, attention and activation layers are evaluated separately—avoiding biased comparisons caused by their heterogeneous gradient scales.
+</p>
+
+<h3>• Stage 2: Removing Layers and Fine‑tuning</h3>
+<p>
+    Once the least important layers are removed, the pruned ViT is fine‑tuned to recover accuracy.  
+    BoundaryDPT optionally supports <strong>self‑distillation</strong>, where the original full model acts as a teacher. This boosts recovery without introducing external models.
+</p>
+
+<h3>• Stage 3: MLP Merging for Structural Simplification</h3>
+<p>
+    With activation layers removed, adjacent linear layers in MLP blocks can be safely merged.  
+    This operation reduces the model’s depth and delivers additional inference speedups <strong>without affecting accuracy</strong>.  
+    The result is a structurally compact and efficient ViT.
+</p>
+
+<h3>• BoundaryDPT+: Depth + Width Pruning</h3>
+<p>
+    BoundaryDPT can be further combined with existing width pruning algorithms to yield <strong>BoundaryDPT+</strong>, a unified framework for extreme ViT compression.  
+    This integration significantly expands the achievable speed–accuracy Pareto frontier.
+</p>
 
 </section>
 
 <!-- ===================== 5. EXPERIMENTAL RESULTS ===================== -->
 <section id="results">
     <h2><span class="icon">📈</span>5. Experimental Results</h2>
+<p>
+    BoundaryDPT delivers consistently superior accuracy–speedup tradeoffs across multiple ViT backbones and downstream tasks. 
+    By jointly pruning attention layers and activation function layers, BoundaryDPT achieves significantly better performance than single‑type pruning and previous depth‑width hybrid methods.
+</p>
 
-    <p>
-        BoundaryDPT achieves state-of-the-art depth pruning results on DeiT-S and DeiT-B, and when 
-        combined with width pruning (BoundaryDPT+), it sets new benchmarks for extreme ViT compression.
-    </p>
+<h3>• Accuracy–Speedup Tradeoff</h3>
+<p>
+    Across DeiT‑S and DeiT‑B, BoundaryDPT achieves much higher accuracy at the same speedup ratio compared to pruning only attention layers or activation layers.  
+    For example, on DeiT‑S, BoundaryDPT reaches a <strong>1.39×</strong> speedup while retaining near‑baseline accuracy (79.7% vs. 79.8%).  
+    On DeiT‑B, it achieves <strong>1.58×</strong> speedup with <strong>no accuracy drop</strong>.
+</p>
 
-    <div class="img-block">
-        <img src="fig/speedup_accuracy_comparison_combined.svg" alt="Speedup vs Accuracy Combined" />
-    </div>
+<div class="img-block">
+    <div class="img-title"><strong>Accuracy–Speedup Comparison (DeiT‑S / DeiT‑B)</strong></div>
+    <img src="fig/speedup_accuracy_comparison_combined.svg" alt="Speedup Accuracy Tradeoff" />
+</div>
 
-    <div class="img-block">
-        <img src="fig/speedup_acc_curve_small.svg" alt="Speedup Accuracy Curve Small" />
-    </div>
+<h3>• Comparison with Depth and Depth–Width Methods</h3>
+<p>
+    BoundaryDPT outperforms prior depth pruning methods such as NOSE and WD‑Pruning, offering both higher throughput and lower compute while maintaining accuracy.  
+    On DeiT‑B, BoundaryDPT removes 10 layers yet still maintains <strong>81.8%</strong> Top‑1 accuracy with a large efficiency gain.
+</p>
 
-    <div class="img-block">
-        <img src="fig/speedup_acc_curve_base.svg" alt="Speedup Accuracy Curve Base" />
-    </div>
+<div style="overflow-x:auto; margin:15px 0;">
+<table border="1" cellpadding="6" style="border-collapse:collapse; width:100%; font-size:0.9rem;">
+    <thead style="background:#f2f2f2;">
+        <tr>
+            <th>Method</th>
+            <th>Top‑1 (%)</th>
+            <th>MACs (G)</th>
+            <th>Throughput</th>
+            <th>Speedup</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>DeiT‑B (Dense)</td>
+            <td>81.8</td>
+            <td>17.6</td>
+            <td>741.5</td>
+            <td>1.00×</td>
+        </tr>
+        <tr>
+            <td>NOSE (6 layers)</td>
+            <td>81.5</td>
+            <td>14.1</td>
+            <td>921.4</td>
+            <td>1.24×</td>
+        </tr>
+        <tr style="background:#fafafa; font-weight:bold;">
+            <td>BoundaryDPT (10 layers)</td>
+            <td>81.8</td>
+            <td>10.5</td>
+            <td>1169.7</td>
+            <td>1.58×</td>
+        </tr>
+    </tbody>
+</table>
+</div>
 
-    <p>
-        BoundaryDPT consistently improves the robustness and efficiency of ViT depth pruning, 
-        achieving Pareto-optimal tradeoffs between accuracy and speed.
-    </p>
+<h3>• Extreme Compression: BoundaryDPT+</h3>
+<p>
+    By integrating depth pruning with width pruning, BoundaryDPT+ reaches a new state of the art in extreme ViT compression.  
+    It not only improves accuracy but also reduces parameters and latency more than strong baselines such as Isomorphic‑Pruning.
+</p>
+
+</div>
+<div class="table-block" style="overflow-x:auto; margin:20px 0;">
+    <table style="border-collapse:collapse; width:100%; font-size:0.9rem; min-width:650px;">
+        <thead style="background:#f2f2f2; font-weight:bold;">
+            <tr>
+                <th style="padding:8px; border:1px solid #ddd;">Method</th>
+                <th style="padding:8px; border:1px solid #ddd;">Top‑1 (%)</th>
+                <th style="padding:8px; border:1px solid #ddd;">MACs (G)</th>
+                <th style="padding:8px; border:1px solid #ddd;">Throughput (images/s)</th>
+                <th style="padding:8px; border:1px solid #ddd;">Params (M)</th>
+                <th style="padding:8px; border:1px solid #ddd;">Speedup (×)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td style="padding:8px; border:1px solid #ddd;">DeiT‑B‑KD</td>
+                <td style="padding:8px; border:1px solid #ddd;">83.3</td>
+                <td style="padding:8px; border:1px solid #ddd;">17.7</td>
+                <td style="padding:8px; border:1px solid #ddd;">741.5</td>
+                <td style="padding:8px; border:1px solid #ddd;">87.3</td>
+                <td style="padding:8px; border:1px solid #ddd;">1.00</td>
+            </tr>
+
+            <tr>
+                <td style="padding:8px; border:1px solid #ddd;">NViT‑S</td>
+                <td style="padding:8px; border:1px solid #ddd;">82.2</td>
+                <td style="padding:8px; border:1px solid #ddd;">3.9</td>
+                <td style="padding:8px; border:1px solid #ddd;">2394.5</td>
+                <td style="padding:8px; border:1px solid #ddd;">20.8</td>
+                <td style="padding:8px; border:1px solid #ddd;">3.23</td>
+            </tr>
+
+            <tr>
+                <td style="padding:8px; border:1px solid #ddd;">Isomorphic‑Pruning 4.2G</td>
+                <td style="padding:8px; border:1px solid #ddd;">82.4</td>
+                <td style="padding:8px; border:1px solid #ddd;">4.2</td>
+                <td style="padding:8px; border:1px solid #ddd;">2516.0</td>
+                <td style="padding:8px; border:1px solid #ddd;">20.7</td>
+                <td style="padding:8px; border:1px solid #ddd;">3.39</td>
+            </tr>
+
+            <tr style="background:#f7f7f7; font-weight:bold;">
+                <td style="padding:8px; border:1px solid #ddd;">BoundaryDPT+‑3.7G</td>
+                <td style="padding:8px; border:1px solid #ddd;">82.5</td>
+                <td style="padding:8px; border:1px solid #ddd;">3.7</td>
+                <td style="padding:8px; border:1px solid #ddd;">2763.9</td>
+                <td style="padding:8px; border:1px solid #ddd;">20.0</td>
+                <td style="padding:8px; border:1px solid #ddd;"><b>3.73</b></td>
+            </tr>
+
+            <tr>
+                <td style="padding:8px; border:1px solid #ddd;">Isomorphic‑Pruning 2.6G</td>
+                <td style="padding:8px; border:1px solid #ddd;">81.1</td>
+                <td style="padding:8px; border:1px solid #ddd;">2.6</td>
+                <td style="padding:8px; border:1px solid #ddd;">3145.8</td>
+                <td style="padding:8px; border:1px solid #ddd;">13.1</td>
+                <td style="padding:8px; border:1px solid #ddd;">4.24</td>
+            </tr>
+
+            <tr style="background:#f7f7f7; font-weight:bold;">
+                <td style="padding:8px; border:1px solid #ddd;">BoundaryDPT+‑2.4G</td>
+                <td style="padding:8px; border:1px solid #ddd;">81.4</td>
+                <td style="padding:8px; border:1px solid #ddd;">2.4</td>
+                <td style="padding:8px; border:1px solid #ddd;">3845.6</td>
+                <td style="padding:8px; border:1px solid #ddd;">13.2</td>
+                <td style="padding:8px; border:1px solid #ddd;"><b>5.19</b></td>
+            </tr>
+
+            <tr>
+                <td style="padding:8px; border:1px solid #ddd;">NViT‑T</td>
+                <td style="padding:8px; border:1px solid #ddd;">76.2</td>
+                <td style="padding:8px; border:1px solid #ddd;">1.2</td>
+                <td style="padding:8px; border:1px solid #ddd;">6013.7</td>
+                <td style="padding:8px; border:1px solid #ddd;">6.7</td>
+                <td style="padding:8px; border:1px solid #ddd;">8.11</td>
+            </tr>
+
+            <tr>
+                <td style="padding:8px; border:1px solid #ddd;">Isomorphic‑Pruning 1.2G</td>
+                <td style="padding:8px; border:1px solid #ddd;">77.5</td>
+                <td style="padding:8px; border:1px solid #ddd;">1.2</td>
+                <td style="padding:8px; border:1px solid #ddd;">6387.4</td>
+                <td style="padding:8px; border:1px solid #ddd;">5.7</td>
+                <td style="padding:8px; border:1px solid #ddd;">8.61</td>
+            </tr>
+
+            <tr style="background:#f7f7f7; font-weight:bold;">
+                <td style="padding:8px; border:1px solid #ddd;">BoundaryDPT+‑1.1G</td>
+                <td style="padding:8px; border:1px solid #ddd;">77.4</td>
+                <td style="padding:8px; border:1px solid #ddd;">1.1</td>
+                <td style="padding:8px; border:1px solid #ddd;">6814.0</td>
+                <td style="padding:8px; border:1px solid #ddd;">6.2</td>
+                <td style="padding:8px; border:1px solid #ddd;"><b>9.19</b></td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<p>
+    Overall, BoundaryDPT and BoundaryDPT+ consistently deliver better accuracy, lower computational cost, and higher throughput than prior pruning and compression methods, establishing new state‑of‑the‑art results across both mild and extreme compression regimes.
+</p>
 
 </section>
 
