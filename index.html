@@ -60,7 +60,13 @@
         background: white;
         box-shadow: 0 0 10px rgba(0,0,0,0.05);
     }
-
+    .img-title {
+        font-size: 1.1rem;       /* 原本可设为 1.0rem，可根据需要调大 */
+        font-weight: 600;
+        margin-bottom: 8px;
+        text-align: center;
+        color: #333;
+    }
     footer {
         margin-top: 50px;
         padding: 20px;
@@ -86,6 +92,7 @@
 <section id="overview">
     <h2><span class="icon">📘</span>1. Overview</h2>
     <div class="img-block">
+        <div class="img-title"><strong>Overview of BoundaryDPT Framework</strong></div>
         <img src="fig/overview.svg" alt="Overview" />
     </div>
     <p>
@@ -120,6 +127,7 @@
     </p>
 
     <div class="img-block">
+        <div class="img-title"><strong>Our Method Push the Pareto Frontier of ViT Compression</strong></div>
         <img src="fig/Pareto.svg" alt="Pareto Frontier" />
     </div>
 </section>
@@ -128,22 +136,30 @@
 <section id="motivation">
     <h2><span class="icon">🎯</span>2. Motivation</h2>
     <p>
-        Depth pruning provides significantly higher speedup than width pruning. However, previous 
-        depth pruning techniques often cause severe accuracy drops. Our goal is to understand the 
-        structural challenges inside ViTs and design a method that fully unlocks the potential of 
-        depth pruning while maintaining accuracy.
+    <strong>Depth pruning and its limitation.</strong> Depth pruning removes entire ViT layers and offers much higher speedups than width pruning under the same sparsity. However, aggressive layer removal often causes severe accuracy degradation. As a result, depth–width hybrid methods are also constrained by the weakness of depth pruning.
     </p>
-
     <div class="img-block">
+         <div class="img-title"><strong>Our Method Push the Pareto Frontier of ViT Compression</strong></div>
         <img src="fig/depth_vs_width_pruning.svg" alt="Depth vs Width" />
     </div>
 
-    <div class="img-block">
-        <img src="fig/dim_mismatch.svg" alt="Dimension Mismatch" />
-    </div>
+
+
+    <p>
+    <strong>Joint depth pruning matters.</strong> Contrary to the common belief that accuracy collapse comes from coarse pruning granularity, our analysis shows the real issue is the lack of <em>joint</em> pruning that accounts for cross‑layer heterogeneity. Pruning only attention layers or only activation layers causes large accuracy drops, while pruning them jointly maintains accuracy and efficiency.
+    </p>
+
 
     <div class="img-block">
         <img src="fig/vit_latency.svg" alt="Layer Latency Distribution" />
+    </div>
+    <p>
+
+    <strong>Dimension mismatch hinders joint pruning.</strong> Linear layers and attention layers dominate ViT latency, so pruning them together is essential. Yet, removing them independently breaks tensor shapes and leads to dimension mismatch (e.g., FFN linear layers no longer align with surrounding attention blocks), making joint depth‑pruned models invalid.
+    </p>
+
+    <div class="img-block">
+        <img src="fig/dim_mismatch.svg" alt="Dimension Mismatch" />
     </div>
 </section>
 
