@@ -55,7 +55,7 @@
 
     img {
         width: 100%;
-        max-width: 700px;
+        max-width: 850px;
         border-radius: 6px;
         background: white;
         box-shadow: 0 0 10px rgba(0,0,0,0.05);
@@ -85,10 +85,38 @@
 <!-- ===================== 1. OVERVIEW ===================== -->
 <section id="overview">
     <h2><span class="icon">📘</span>1. Overview</h2>
+    <div class="img-block">
+        <img src="fig/overview.svg" alt="Overview" />
+    </div>
     <p>
-        BoundaryDPT is a new depth pruning framework for Vision Transformers (ViTs). It jointly prunes 
-        self-attention layers and activation function layers while avoiding the dimension mismatch 
-        problem that traditionally makes depth pruning unstable and inaccurate.
+        <strong>BoundaryDPT</strong> is a new depth pruning framework for Vision Transformers (ViTs) that 
+        significantly extends the efficiency–accuracy frontier beyond previous pruning approaches. 
+        While most ViT compression techniques focus on width pruning or suffer accuracy collapse 
+        when removing entire layers, BoundaryDPT provides a principled, heterogeneity solution 
+        that jointly prunes <strong>attention layers</strong> and <strong>activation function layers</strong> (the first method 
+        to exploit activation‑layer redundancy in ViTs.)
+    </p>
+
+    <p>
+        Through a three‑stage pipeline that integrates a Model Accuracy Predictor (MAP), 
+        training‑based layer selection, finetuning and post‑pruning MLP merging, BoundaryDPT resolves 
+        dimension‑mismatch problems and fully unlocks depth pruning’s superior acceleration potential. 
+        Experiments on ImageNet‑1K, CIFAR‑100, and ADE20K show that BoundaryDPT delivers 
+        <strong>lossless or near‑lossless accuracy</strong> while achieving substantially 
+        <strong>higher speedups</strong> than previous depth pruning or token pruning methods.
+    </p>
+
+    <p>
+        Building on this foundation, <strong>BoundaryDPT+</strong> integrates depth pruning with width pruning, 
+        achieving state‑of‑the‑art results in <em>extreme</em> ViT compression. 
+        For example, BoundaryDPT+ improves the speedup of the popular 
+        Isomorphic-Pruning‑2.6G configuration from <strong>4.24× to 5.19×</strong> while 
+        maintaining (and even improving) accuracy—establishing a new benchmark for efficient ViT deployment.
+    </p>
+
+    <p>
+        BoundaryDPT reveals and leverages previously untapped structural redundancy in ViTs, 
+        offering a scalable compression strategy for real‑world acceleration.
     </p>
 
     <div class="img-block">
@@ -164,9 +192,6 @@
         <li><b>Activation-layer removal + MLP merging</b> — safely reduces depth without breaking tensor shapes.</li>
     </ul>
 
-    <div class="img-block">
-        <img src="fig/overview.svg" alt="Method Overview" />
-    </div>
 
     <div class="img-block">
         <img src="fig/pipeline.svg" alt="Pipeline" />
