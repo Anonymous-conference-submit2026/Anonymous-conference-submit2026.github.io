@@ -21,13 +21,18 @@ body {
 h1, h2 {
   margin-top: 45px;
 }
-pre {
-  background: #f4f4f4;
-  padding: 10px;
-  overflow-x: auto;
+/* 让 pre 内部 code 也跟随外框，而不是灰色底 */
+pre code {
+  background: transparent !important;
+  display: block;
+  padding: 0;
+  color: #e9ecf1;
+  white-space: pre;
 }
 code {
+  background: transparent;   /* 去 inline code 灰底 */
   color: #c7254e;
+  padding: 0;                /* 去掉留白 */
 }
 hr { margin: 40px 0; }
 .section-card {
@@ -299,23 +304,21 @@ hr {
   margin: 28px 0;
 }
 
-/* High-contrast code block */
-.code-container {
-  background: #0b0d11;              /* darker for better contrast */
-  padding: 18px;
+/* 统一控制代码块外观（保持独立框）*/
+pre, .code-container {
+  background: #0b0d11;          /* 独立深色框，而不是灰底 */
+  border: 1px solid #22262f;    /* 明显外框 */
   border-radius: 10px;
+  padding: 16px 18px;
   overflow-x: auto;
-  border: 1px solid #22262f;
-  margin-top: 16px;
-  margin-bottom: 24px;
+  margin: 20px 0;
 }
 
-/* Brighter text for code */
+/* 让 code 无底色 */
 code {
-  color: #e9ecf1;                    /* brighter white */
-  font-size: 15px;
-  line-height: 1.58;
-  white-space: pre;
+  background: transparent !important;
+  color: #e9ecf1;
+  padding: 0;
 }
 
 /* Algorithm title inside block */
@@ -352,94 +355,70 @@ representative accuracy samples.
 <hr>
 
 <!-- Algorithm 1 -->
-<div class="code-container">
-<code>
+<pre><code>
 <span class="alg-title">Algorithm 1: Fast Data Collection (Single Layer Type)</span>
 # Inputs
 Y0 = pretrained_model
 rds = num_rounds
 k   = pruning_budget
 L   = total_layers
-
 # Initialization
 train_data = [(m_a0, m_g0, a0)]
-
 def prune_along(layer_type, x0, xmax):
     """Progressive pruning along a single layer type."""
     for n in range(1, rds + 1):
-
         # target pruning ratio
         xn = x0 + n * (xmax - x0) / rds
-
         # prune model
         Yn = prune(Y[n-1], layer_type=layer_type, ratio=xn)
-
         # fast finetune + evaluate
         m_a, m_g, a = evaluate(Yn)
-
         # save
         train_data.append((m_a, m_g, a))
-
 # max ratios
 m_a_max = k / L
 m_g_max = k / L
-
 # two progressive sweeps
 prune_along("attention",  m_a0, m_a_max)
 prune_along("activation", m_g0, m_g_max)
-
 return train_data
-</code>
-</div>
+</code></pre>
 
 <hr>
 
 <!-- Algorithm 2 -->
-<div class="code-container">
-<code>
+<pre><code>
 <span class="alg-title">Algorithm 2: Fast Data Collection (Interleaved Pruning)</span>
 # Inputs
 Y0 = pretrained_model
 rds = num_rounds
 k   = pruning_budget
 L   = total_layers
-
 # Initialization
 train_data = [(m_a0, m_g0, a0)]
-
 def prune_iterative((m_a0, m_g0), (m_a_max, m_g_max)):
     for n in range(1, rds + 1):
-
         # ----- Step 1: prune attention -----
         m_a_n   = m_a0 + n     * (m_a_max - m_a0) / rds
         m_g_n_1 = m_g0 + (n-1) * (m_g_max - m_g0) / rds
-
         Y_temp = prune(Y[n-1], layer_type="attention", ratio=m_a_n)
-
         # evaluate after attention prune
         m_a, m_g, a = evaluate(Y_temp)
         train_data.append((m_a, m_g, a))
-
         # ----- Step 2: prune activation -----
         m_g_n = m_g0 + n * (m_g_max - m_g0) / rds
-
         Yn = prune(Y_temp, layer_type="activation", ratio=m_g_n)
-
         # evaluate after activation prune
         m_a, m_g, a = evaluate(Yn)
         train_data.append((m_a, m_g, a))
-
 # max ratios
 m_a_max = k / L
 m_g_max = k / L
-
 prune_iterative((m_a0, m_g0), (m_a_max, m_g_max))
-
 return train_data
-</code>
-</div>
+</code></pre>
 
-<h3>3. Efficiency and Data Quality</h3>
+<h3>Efficiency and Data Quality</h3>
 
 <ul>
   <li><b>Progressive single‑type pruning</b> produces smooth 1D trajectories and low‑variance samples.</li>

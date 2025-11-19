@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>MAP: Model Accuracy Predictor — Theory, Implementation, Robustness</title>
+
+<!-- MathJax -->
+<script>
+window.MathJax = { tex: {inlineMath: [['\\(','\\)']], displayMath: [['$$','$$']] } };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+<style>
+/* ---------- 全局白底 ---------- */
+body {
+  max-width: 900px;
+  margin: auto;
+  padding: 20px;
+  font-size: 18px;
+  line-height: 1.7;
+  font-family: Arial, sans-serif;
+  background: #ffffff;
+  color: #000000;
+}
+
+h1, h2, h3 {
+  color: #000000;
+  margin-top: 45px;
+}
+
+hr { 
+  border: none; 
+  height: 1px; 
+  background: #cccccc; 
+  margin: 40px 0;
+}
+
+/* ---------- 表格 ---------- */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 12px 0;
+}
+table, th, td {
+  border: 1px solid #555;
+}
+th, td {
+  padding: 6px 8px;
+  text-align: center;
+  color: #000000;
+}
+
+/* ---------- SVG 算法图 ---------- */
+.svg-alg {
+  display: flex;
+  justify-content: center;
+  margin: 25px 0;
+}
+.svg-alg img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+/* ---------- 小屏适配 ---------- */
+@media (max-width: 600px) {
+  body { font-size: 16px; }
+}
+</style>
+</head>
+
+
+<body>
+
+<h1>MAP: Model Accuracy Predictor</h1>
+<p>
+This webpage provides a clean and complete explanation of the
+<b>Model Accuracy Predictor (MAP)</b> used in BoundaryDPT,
+including its definition, mathematical foundations, fast data collection,
+numerical examples, robustness experiments, and runtime overhead.
+</p>
+
+<hr>
+
+<!-- ============================================================
+     1. MAP Definition
+============================================================ -->
+<h2>1. Definition of MAP</h2>
+
+<p>
+The <b>Model Accuracy Predictor (MAP)</b> is a parametric function
+\(\mathcal{P}(\tilde{m}_a,\tilde{m}_g;\Theta)\) that estimates the accuracy
+of a Vision Transformer (ViT) under pruning ratios:
+</p>
+
+$$
+\tilde m_a = \frac{\|\hat m_a\|_0}{L},
+\qquad
+\tilde m_g = \frac{\|\hat m_g\|_0}{L}.
+$$
+
+<p>
+Given a pruning budget constraint:
+</p>
+
+$$
+\tilde{m}_a + \tilde{m}_g = \frac{k}{L},
+$$
+
+<p>
+the optimal pruning configuration is:
+</p>
+
+$$
+(\tilde{m}_a^\star,\tilde{m}_g^\star)
+=
+\underset{\tilde m_a+\tilde m_g = k/L}{\arg\max}\;
+\mathcal{P}(\tilde{m}_a,\tilde{m}_g;\Theta).
+$$
+
+<h3>Polynomial Parameterization</h3>
+
+<p>MAP uses a polynomial approximation:</p>
+
+$$
+\mathcal{P}(\tilde{m}_a,\tilde{m}_g)
+=
+\sum_{i,j=0}^{\kappa}
+\theta_{ij}\,
+\tilde m_a^{\,i}\,
+\tilde m_g^{\,j}.
+$$
+
+<p>Quadratic (\(\kappa=2\)) is sufficient.</p>
+
+<hr>
+
+
+<!-- ============================================================
+     2. MAP Theoretical Foundations
+============================================================ -->
+<h2>2. Theoretical Foundations</h2>
+
+<h3>Theorem 1 — Existence of Optimum</h3>
+<p>
+The pruning domain is finite. Therefore the maximum exists.
+</p>
+
+<h3>Theorem 2 — Polynomial Approximation</h3>
+<p>
+By Stone–Weierstrass theorem, the continuous accuracy landscape admits a polynomial approximation.
+</p>
+
+<h3>Theorem 3 — Robustness</h3>
+<p>
+Fast-finetuning noise = constant bias + zero-mean noise → does not change the maximizer.
+</p>
+
+<hr>
+
+
+<!-- ============================================================
+     3. Fast Data Collection — (now using SVG)
+============================================================ -->
+<h2>3. Fast Data Collection for MAP Regression</h2>
+
+<h3>Algorithm 1 — Single-Type Progressive Pruning</h3>
+<div class="svg-alg">
+  <img src="./algo1.svg" alt="Algorithm 1: Fast data collection (single layer type)">
+</div>
+
+<hr>
+
+<h3>Algorithm 2 — Interleaved Pruning</h3>
+<div class="svg-alg">
+  <img src="./algo2.svg" alt="Algorithm 2: Interleaved pruning">
+</div>
+
+<hr>
+
+
+<!-- ============================================================
+     4. Numerical Example
+============================================================ -->
+<h2>4. Numerical Example of MAP Fitting</h2>
+
+<p>Example dataset for DeiT‑Base (\(L=12\)):</p>
+
+<table>
+<thead>
+<tr><th>a</th><th>t</th><th>Acc</th><th>a</th><th>t</th><th>Acc</th></tr>
+</thead>
+<tbody>
+<tr><td>1.00</td><td>1.00</td><td>81.80</td><td>1.00</td><td>0.92</td><td>81.07</td></tr>
+<tr><td>0.92</td><td>1.00</td><td>81.31</td><td>1.00</td><td>0.83</td><td>80.40</td></tr>
+<tr><td>0.83</td><td>1.00</td><td>80.90</td><td>1.00</td><td>0.75</td><td>78.90</td></tr>
+</tbody>
+</table>
+
+<h3>Polynomial Fit</h3>
+
+$$
+\hat{P}(a,t)
+= 31.68 + 50.65a + 39.29t
+- 19.79 a^2 - 8.34 at - 11.70t^2.
+$$
+
+<p>Converted to pruning ratios:</p>
+
+$$
+\mathcal{P}(\tilde{m}_a,\tilde{m}_g)
+= 81.79
+- 2.73\tilde m_a
+- 7.55\tilde m_g
+- 19.79\tilde m_a^2
+- 8.34\tilde m_a\tilde m_g
+- 11.70\tilde m_g^2.
+$$
+
+<hr>
+
+
+<!-- ============================================================
+     5. Robustness
+============================================================ -->
+<h2>5. Robustness of MAP</h2>
+
+<ul>
+  <li>Mean: \((0.6215, 0.7118)\)</li>
+  <li>Std:  \((0.1034, 0.1034)\)</li>
+  <li>Baseline optimum: \((0.6667, 0.6667)\)</li>
+</ul>
+
+<p>
+75% identical optimum, 80.2% within one layer → MAP is highly robust.
+</p>
+
+<hr>
+
+
+<!-- ============================================================
+     6. Runtime
+============================================================ -->
+<h2>6. Runtime Overhead</h2>
+
+<ul>
+  <li>Data collection: ~7 hours</li>
+  <li>MAP regression: &lt; 0.01s</li>
+</ul>
+
+</body>
+</html>
