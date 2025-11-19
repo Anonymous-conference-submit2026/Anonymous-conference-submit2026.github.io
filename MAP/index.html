@@ -72,8 +72,8 @@ code {
 
 <p>
 This webpage provides a clean and complete explanation of the <b>Model Accuracy Predictor (MAP)</b> used in BoundaryDPT,
-including its definition, mathematical foundations, numerical examples, robustness experiments, and runtime overhead.
-It serves as a supplement to the full paper.
+including its definition, mathematical foundations,fast data collection, numerical examples, robustness experiments, and runtime overhead.
+
 </p>
 
 <hr>
@@ -81,11 +81,11 @@ It serves as a supplement to the full paper.
 <!-- ============================================================
      1. MAP 的定义
 ============================================================ -->
-<h2>1. Definition of MAP (Model Accuracy Predictor)</h2>
+<h2>1. Definition of MAP</h2>
 
 <p>
 The <b>Model Accuracy Predictor (MAP)</b> is a parametric function
-\(\mathcal{P}(\tilde{m}_a,\tilde{m}_g;\Theta)\) that estimates the final accuracy
+\(\mathcal{P}(\tilde{m}_a,\tilde{m}_g;\Theta)\) that estimates the accuracy
 of a Vision Transformer (ViT) under a given pair of pruning ratios:
 </p>
 
@@ -158,7 +158,7 @@ The Model Accuracy Predictor (MAP) is supported by three complementary theoretic
 
 <hr>
 
-<h3>Existence of an Optimal Pruning Configuration</h3>
+<h3>Existence of an Optimal Pruning Configuration(Theorem 1)</h3>
 
 <p>
 For a Vision Transformer with \(L\) layers, the pruning ratios for attention and activation layers lie in the discrete set:
@@ -183,7 +183,7 @@ $$
 
 <p>
 must attain its maximum on this finite set.  
-This ensures that the pruning‑ratio optimization problem is <b>well‑posed</b> and that an optimal pruning configuration <b>always exists</b>, enabling direct enumeration once MAP is available.
+This ensures that the pruning‑ratio optimization problem is <b>well‑posed</b> and that an optimal pruning configuration <b>always exists</b>, enabling direct enumeration once MAP is available. The full proof is provided in <a href="../MathProof/prof1.html">Theorem 1</a>.
 </p>
 
 <hr>
@@ -209,7 +209,7 @@ $$
 
 <p>
 Thus the accuracy landscape over pruning ratios is guaranteed to admit an accurate polynomial surrogate.  
-This directly justifies modeling MAP as a polynomial function of \((\tilde m_a,\tilde m_g)\), enabling efficient regression‑based estimation with limited data.
+This directly justifies modeling MAP as a polynomial function of \((\tilde m_a,\tilde m_g)\), enabling efficient regression‑based estimation with limited data. The full proof is provided in <a href="../MathProof/prof2.html">Theorem 2</a>.
 </p>
 
 <hr>
@@ -251,7 +251,7 @@ $$
 
 <p>
 which is simply a vertical shift of the true accuracy surface and does not alter the optimal pruning solution.  
-Therefore, MAP remains a <b>statistically consistent</b> estimator of the true accuracy function, despite the inherent noise of rapid finetuning.
+Therefore, MAP remains a <b>statistically consistent</b> estimator of the true accuracy function, despite the inherent noise of rapid finetuning. <a href="../MathProof/prof3.html">Theorem 3</a>.
 </p>
 
 <hr>
@@ -271,135 +271,191 @@ Together, these results establish MAP as a mathematically sound and practically 
 <!-- ============================================================
     3. Fast data collection for MAP
 ============================================================ -->
-<h2>Fast Data Collection for MAP Regression</h2>
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Fast Data Collection for MAP Regression</title>
+
+<style>
+body {
+  background: #0f1117;
+  color: #e5e5e5;
+  font-family: "JetBrains Mono", monospace;
+  padding: 24px;
+  line-height: 1.6;
+}
+
+h2, h3 {
+  color: #90e5ff;
+  font-weight: 600;
+}
+
+p, li {
+  font-size: 16px;
+}
+
+hr {
+  border: none;
+  height: 1px;
+  background: #2a2f3d;
+  margin: 28px 0;
+}
+
+/* Code block styling */
+.code-container {
+  background: #1a1d27;
+  padding: 18px;
+  border-radius: 10px;
+  overflow-x: auto;
+  border: 1px solid #2a2f3d;
+  margin-top: 16px;
+  margin-bottom: 24px;
+}
+
+code {
+  color: #fff;
+  font-size: 15px;
+  line-height: 1.55;
+  white-space: pre;
+}
+
+/* Title inside code block */
+.alg-title {
+  font-weight: bold;
+  color: #7fdfff;
+  display: block;
+  margin-bottom: 10px;
+  font-size: 15px;
+}
+
+/* Mobile adjustments */
+@media (max-width: 600px) {
+  code {
+    font-size: 14px;
+  }
+}
+</style>
+</head>
+
+
+<body>
+
+<h2>3. Fast Data Collection for MAP Regression</h2>
 
 <p>
 To efficiently train the Model Accuracy Predictor (MAP), we design two lightweight
-data‑collection procedures that avoid the high computational cost of full pruning
-and full‑epoch finetuning for every pruning configuration.  
-Both procedures operate in a repeated <b>prune → fast‑finetune → evaluate</b> loop and
-produce representative accuracy samples at minimal cost.
+data‑collection procedures that avoid the high cost of full pruning and full‑epoch
+finetuning for every configuration.
+Both operate in a repeated <b>prune → fast‑finetune → evaluate</b> loop and
+produce representative accuracy samples at minimal computational cost.
 </p>
 
 <hr>
-<!-- ---------- Enhanced Pseudocode Style ---------- -->
 
-<style>
-pre code {
-  font-family: "JetBrains Mono", "Fira Code", monospace;
-  font-size: 16px;
-  line-height: 1.55;
-  color: #ffffff;
-}
-.alg-title {
-  font-weight: bold;
-  margin-bottom: 6px;
-  display: block;
-}
-</style>
-
-<h3>1. Progressive Single‑Type Pruning</h3>
-
-<p>Its full pseudocode is shown below:</p>
-
-<pre><code>
+<div class="code-container">
+<code>
 <span class="alg-title">Algorithm 1: Fast data collection for MAP regression (single layer type)</span>
+# Inputs
+Y0 = pretrained_model
+rds = num_rounds
+k   = pruning_budget
+L   = total_layers
 
-Input:
-    pre-trained model Y₀
-    number of rounds rds
-    pruning budget k
-    total layers L
+# Initialization
+train_data = [(m_a0, m_g0, a0)]
 
-Initialize:
-    train_data = { (mₐ₀, m_g₀, a₀) }
+def prune_along(layer_type, x0, xmax):
+    """Progressive pruning along a single layer type."""
+    for n in range(1, rds + 1):
+        # target pruning ratio for current step
+        xn = x0 + n * (xmax - x0) / rds
 
-Function PruneAlong(layer_type, x₀, x_max):
-    For n = 1 to rds:
-        // Target pruning ratio
-        xₙ = x₀ + n * (x_max - x₀) / rds
+        # prune model
+        Yn = prune(Y[n-1], layer_type=layer_type, ratio=xn)
 
-        // Prune model
-        Prune Yₙ₋₁ along layer_type to ratio xₙ → Yₙ
+        # fast finetune + evaluate
+        m_a, m_g, a = evaluate(Yn)
 
-        // Fast finetune and evaluate
-        Evaluate → (mₐₙ, m_gₙ, aₙ)
+        # record
+        train_data.append((m_a, m_g, a))
 
-        Append (mₐₙ, m_gₙ, aₙ) into train_data
-
-// Maximum ratios
-mₐ_max = k / L
+# max ratios
+m_a_max = k / L
 m_g_max = k / L
 
-// Run two sweeps: attention then activation
-PruneAlong("attention",  mₐ₀, mₐ_max)
-PruneAlong("activation", m_g₀, m_g_max)
+# sweeps
+prune_along("attention",  m_a0, m_a_max)
+prune_along("activation", m_g0, m_g_max)
 
-Return train_data
-</code></pre>
+return train_data
+</code>
+</div>
 
 <hr>
 
-<h3>2. Interleaved Two‑Dimensional Pruning</h3>
 
-<p>Its full pseudocode is shown below:</p>
-
-<pre><code>
+<div class="code-container">
+<code>
 <span class="alg-title">Algorithm 2: Fast data collection for MAP regression (interleaved pruning)</span>
+# Inputs
+Y0 = pretrained_model
+rds = num_rounds
+k   = pruning_budget
+L   = total_layers
 
-Input:
-    pre-trained model Y₀
-    number of rounds rds
-    pruning budget k
-    total layers L
+# Initialization
+train_data = [(m_a0, m_g0, a0)]
 
-Initialize:
-    train_data = { (mₐ₀, m_g₀, a₀) }
+def prune_iterative((m_a0, m_g0), (m_a_max, m_g_max)):
+    for n in range(1, rds + 1):
 
-Function PruneIterative((mₐ₀, m_g₀), (mₐ_max, m_g_max)):
-    For n = 1 to rds:
+        # ----- Step 1: prune attention first -----
+        m_a_n   = m_a0 + n     * (m_a_max - m_a0) / rds
+        m_g_n_1 = m_g0 + (n-1) * (m_g_max - m_g0) / rds
 
-        // -------- Step 1: prune attention --------
-        mₐₙ   = mₐ₀ + n     * (mₐ_max - mₐ₀) / rds
-        m_gₙ₋₁ = m_g₀ + (n-1) * (m_g_max - m_g₀) / rds
+        Y_temp = prune(Y[n-1], layer_type="attention", ratio=m_a_n)
 
-        Prune Yₙ₋₁ along attention to ratio mₐₙ → Y'ₙ
+        # evaluate after attention prune
+        m_a, m_g, a = evaluate(Y_temp)
+        train_data.append((m_a, m_g, a))
 
-        // Fast finetune + evaluate (after attention prune)
-        Evaluate → (mₐₙ, m_gₙ₋₁, aₙ)
-        Append (mₐₙ, m_gₙ₋₁, aₙ) into train_data
+        # ----- Step 2: prune activation -----
+        m_g_n = m_g0 + n * (m_g_max - m_g0) / rds
 
-        // -------- Step 2: prune activation --------
-        m_gₙ = m_g₀ + n * (m_g_max - m_g₀) / rds
+        Yn = prune(Y_temp, layer_type="activation", ratio=m_g_n)
 
-        Prune Y'ₙ along activation to ratio m_gₙ → Yₙ
+        # evaluate after activation prune
+        m_a, m_g, a = evaluate(Yn)
+        train_data.append((m_a, m_g, a))
 
-        // Fast finetune + evaluate (after activation prune)
-        Evaluate → (mₐₙ, m_gₙ, aₙ)
-        Append (mₐₙ, m_gₙ, aₙ) into train_data
-
-// Maximum ratios
-mₐ_max = k / L
+# max ratios
+m_a_max = k / L
 m_g_max = k / L
 
-PruneIterative((mₐ₀, m_g₀), (mₐ_max, m_g_max))
+prune_iterative((m_a0, m_g0), (m_a_max, m_g_max))
 
-Return train_data
-</code></pre>
+return train_data
+</code>
+</div>
+
 
 <h3>3. Efficiency and Data Quality</h3>
 
 <ul>
-  <li><b>Single‑type progressive pruning</b> yields stable 1D trajectories and low‑variance samples.</li>
-  <li><b>Interleaved pruning</b> explores the joint pruning space and captures cross‑layer interactions.</li>
+  <li><b>Single‑type progressive pruning</b> yields smooth, low‑variance 1D trajectories.</li>
+  <li><b>Interleaved pruning</b> explores the 2D pruning space and captures cross‑layer interactions.</li>
 </ul>
 
 <p>
-Together, they produce a compact yet expressive dataset that enables accurate MAP
-regression using only limited pruning/finetuning runs.  
-This significantly reduces the cost of mapping the accuracy landscape while
-preserving the fidelity required for reliable pruning‑ratio optimization.
+Together, these procedures produce a compact yet expressive dataset that enables accurate MAP
+regression using only a small number of pruning/finetuning runs, significantly
+reducing the cost of exploring the pruning‑accuracy landscape.
 </p>
+
+</body>
+</html>
 
 <!-- ============================================================
      4. MAP 的运行例子
