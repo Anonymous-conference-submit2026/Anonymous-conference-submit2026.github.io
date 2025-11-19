@@ -281,19 +281,15 @@ Together, these results establish MAP as a mathematically sound and practically 
 <style>
 body {
   background: #0f1117;
-  color: #e5e5e5;
+  color: #e6e6e6;
   font-family: "JetBrains Mono", monospace;
   padding: 24px;
   line-height: 1.6;
 }
 
 h2, h3 {
-  color: #90e5ff;
+  color: #8fe8ff;
   font-weight: 600;
-}
-
-p, li {
-  font-size: 16px;
 }
 
 hr {
@@ -303,34 +299,35 @@ hr {
   margin: 28px 0;
 }
 
-/* Code block styling */
+/* High-contrast code block */
 .code-container {
-  background: #1a1d27;
+  background: #0b0d11;              /* darker for better contrast */
   padding: 18px;
   border-radius: 10px;
   overflow-x: auto;
-  border: 1px solid #2a2f3d;
+  border: 1px solid #22262f;
   margin-top: 16px;
   margin-bottom: 24px;
 }
 
+/* Brighter text for code */
 code {
-  color: #fff;
+  color: #e9ecf1;                    /* brighter white */
   font-size: 15px;
-  line-height: 1.55;
+  line-height: 1.58;
   white-space: pre;
 }
 
-/* Title inside code block */
+/* Algorithm title inside block */
 .alg-title {
   font-weight: bold;
-  color: #7fdfff;
+  color: #77d9ff;
   display: block;
-  margin-bottom: 10px;
-  font-size: 15px;
+  margin-bottom: 12px;
+  font-size: 16px;
 }
 
-/* Mobile adjustments */
+/* Mobile optimization */
 @media (max-width: 600px) {
   code {
     font-size: 14px;
@@ -347,16 +344,17 @@ code {
 <p>
 To efficiently train the Model Accuracy Predictor (MAP), we design two lightweight
 data‑collection procedures that avoid the high cost of full pruning and full‑epoch
-finetuning for every configuration.
-Both operate in a repeated <b>prune → fast‑finetune → evaluate</b> loop and
-produce representative accuracy samples at minimal computational cost.
+finetuning.  
+Both use a repeated <b>prune → fast‑finetune → evaluate</b> loop to obtain efficient,
+representative accuracy samples.
 </p>
 
 <hr>
 
+<!-- Algorithm 1 -->
 <div class="code-container">
 <code>
-<span class="alg-title">Algorithm 1: Fast data collection for MAP regression (single layer type)</span>
+<span class="alg-title">Algorithm 1: Fast Data Collection (Single Layer Type)</span>
 # Inputs
 Y0 = pretrained_model
 rds = num_rounds
@@ -369,7 +367,8 @@ train_data = [(m_a0, m_g0, a0)]
 def prune_along(layer_type, x0, xmax):
     """Progressive pruning along a single layer type."""
     for n in range(1, rds + 1):
-        # target pruning ratio for current step
+
+        # target pruning ratio
         xn = x0 + n * (xmax - x0) / rds
 
         # prune model
@@ -378,14 +377,14 @@ def prune_along(layer_type, x0, xmax):
         # fast finetune + evaluate
         m_a, m_g, a = evaluate(Yn)
 
-        # record
+        # save
         train_data.append((m_a, m_g, a))
 
 # max ratios
 m_a_max = k / L
 m_g_max = k / L
 
-# sweeps
+# two progressive sweeps
 prune_along("attention",  m_a0, m_a_max)
 prune_along("activation", m_g0, m_g_max)
 
@@ -395,10 +394,10 @@ return train_data
 
 <hr>
 
-
+<!-- Algorithm 2 -->
 <div class="code-container">
 <code>
-<span class="alg-title">Algorithm 2: Fast data collection for MAP regression (interleaved pruning)</span>
+<span class="alg-title">Algorithm 2: Fast Data Collection (Interleaved Pruning)</span>
 # Inputs
 Y0 = pretrained_model
 rds = num_rounds
@@ -411,7 +410,7 @@ train_data = [(m_a0, m_g0, a0)]
 def prune_iterative((m_a0, m_g0), (m_a_max, m_g_max)):
     for n in range(1, rds + 1):
 
-        # ----- Step 1: prune attention first -----
+        # ----- Step 1: prune attention -----
         m_a_n   = m_a0 + n     * (m_a_max - m_a0) / rds
         m_g_n_1 = m_g0 + (n-1) * (m_g_max - m_g0) / rds
 
@@ -440,23 +439,20 @@ return train_data
 </code>
 </div>
 
-
 <h3>3. Efficiency and Data Quality</h3>
 
 <ul>
-  <li><b>Single‑type progressive pruning</b> yields smooth, low‑variance 1D trajectories.</li>
-  <li><b>Interleaved pruning</b> explores the 2D pruning space and captures cross‑layer interactions.</li>
+  <li><b>Progressive single‑type pruning</b> produces smooth 1D trajectories and low‑variance samples.</li>
+  <li><b>Interleaved pruning</b> explores the 2D pruning space and captures cross‑layer dependencies.</li>
 </ul>
 
 <p>
-Together, these procedures produce a compact yet expressive dataset that enables accurate MAP
-regression using only a small number of pruning/finetuning runs, significantly
-reducing the cost of exploring the pruning‑accuracy landscape.
+Together, these procedures create a compact yet expressive dataset for training MAP,
+dramatically reducing computation while retaining accuracy‑landscape fidelity.
 </p>
 
 </body>
 </html>
-
 <!-- ============================================================
      4. MAP 的运行例子
 ============================================================ -->
