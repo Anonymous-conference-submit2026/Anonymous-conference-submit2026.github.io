@@ -11,74 +11,131 @@ window.MathJax = { tex: {inlineMath: [['\\(','\\)']], displayMath: [['$$','$$']]
 <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 
 <style>
+/* ---------- 全局白底 ---------- */
 body {
   max-width: 900px;
   margin: auto;
   padding: 20px;
   font-size: 18px;
   line-height: 1.7;
+  font-family: Arial, sans-serif;
+  background: #ffffff;
+  color: #000000;
 }
-h1, h2 {
+
+h1, h2, h3 {
+  color: #000000;
   margin-top: 45px;
 }
-/* 让 pre 内部 code 也跟随外框，而不是灰色底 */
-pre code {
-  background: transparent !important;
-  display: block;
-  padding: 0;
-  color: #e9ecf1;
-  white-space: pre;
+
+hr { 
+  border: none; 
+  height: 1px; 
+  background: #cccccc; 
+  margin: 40px 0;
 }
-code {
-  background: transparent;   /* 去 inline code 灰底 */
-  color: #c7254e;
-  padding: 0;                /* 去掉留白 */
-}
-hr { margin: 40px 0; }
-.section-card {
-  background: #fafafa;
-  padding: 15px 20px;
-  border-left: 5px solid #4c8bf5;
-  margin: 20px 0;
-}
-body {
-  font-family: Arial, sans-serif;
-  margin: 20px;
-  line-height: 1.55;
-}
+
+/* ---------- 表格 ---------- */
 table {
   width: 100%;
   border-collapse: collapse;
   margin: 12px 0;
 }
 table, th, td {
-  border: 1px solid #aaa;
+  border: 1px solid #555;
 }
 th, td {
   padding: 6px 8px;
   text-align: center;
+  color: #000000;
 }
-h2, h3 {
-  margin-top: 30px;
+
+/* ---------- SVG 算法图 ---------- */
+.svg-alg {
+  display: flex;
+  justify-content: center;
+  margin: 25px 0;
 }
-code {
-  background: #f5f5f5;
-  padding: 2px 4px;
+.svg-alg img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  border: 1px solid #ccc;
 }
+
+/* ---------- 小屏适配 ---------- */
 @media (max-width: 600px) {
-  table { font-size: 13px; }
+  body { font-size: 16px; }
 }
 </style>
 </head>
 
+<!-- ===================== Navigation Bar ===================== -->
+<style>
+.navbar {
+  width: 100%;
+  background: #f5f5f5;
+  border-bottom: 1px solid #ccc;
+  padding: 12px 0;
+  margin-bottom: 30px;
+  position: sticky;
+  top: 0;
+  z-index: 999;
+}
+
+.navbar ul {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  padding: 0;
+  margin: 0;
+}
+
+.navbar li {
+  margin: 6px 18px;
+}
+
+.navbar a {
+  text-decoration: none;
+  color: #000000;
+  font-weight: bold;
+  font-size: 17px;
+}
+
+.navbar a:hover {
+  text-decoration: underline;
+}
+
+/* Mobile adaptation */
+@media (max-width: 600px) {
+  .navbar li {
+    margin: 6px 10px;
+  }
+  .navbar a {
+    font-size: 15px;
+  }
+}
+</style>
+
+<div class="navbar">
+  <ul>
+    <li><a href="#sec1">Definition</a></li>
+    <li><a href="#sec2">Theory</a></li>
+    <li><a href="#sec3">Data Collection</a></li>
+    <li><a href="#sec4">Numerical Example</a></li>
+    <li><a href="#sec5">Robustness</a></li>
+    <li><a href="#sec6">Overhead</a></li>
+  </ul>
+</div>
 <body>
 
-<h1>MAP: Model Accuracy Predictor</h1>
-
+<h1>The Details of MAP: Model Accuracy Predictor</h1>
 <p>
-This webpage provides a clean and complete explanation of the <b>Model Accuracy Predictor (MAP)</b> used in BoundaryDPT,
-including its definition, mathematical foundations,fast data collection, numerical examples, robustness experiments, and runtime overhead.
-
+This webpage provides a clean and complete explanation of the
+<b>Model Accuracy Predictor (MAP)</b> used in BoundaryDPT,
+including its definition, mathematical foundations, fast data collection,
+numerical examples, robustness experiments, and runtime overhead.
 </p>
 
 <hr>
@@ -86,7 +143,7 @@ including its definition, mathematical foundations,fast data collection, numeric
 <!-- ============================================================
      1. MAP 的定义
 ============================================================ -->
-<h2>1. Definition of MAP</h2>
+<h2 id="sec1">1. Definition of MAP</h2>
 
 <p>
 The <b>Model Accuracy Predictor (MAP)</b> is a parametric function
@@ -152,10 +209,11 @@ lightweight regression problem, enabling efficient and accurate prediction of
 the best pruning configuration.
 </p>
 
+
 <!-- ============================================================
      2. MAP 可应用的数学证明
 ============================================================ -->
-<h2>2. Theoretical Foundations of MAP</h2>
+<h2 id="sec2">2. Theoretical Foundations of MAP</h2>
 
 <p>
 The Model Accuracy Predictor (MAP) is supported by three complementary theoretical results, which together ensure that the pruning‑ratio optimization problem is mathematically well‑posed, continuously approximable, and robust to noise introduced during fast finetuning. These foundations justify why MAP is both valid and reliable for guiding pruning‑ratio selection in BoundaryDPT.
@@ -274,76 +332,9 @@ Together, these results establish MAP as a mathematically sound and practically 
 </p>
 
 <!-- ============================================================
-    3. Fast data collection for MAP
+     3. Fast Data Collection — (now using SVG)
 ============================================================ -->
-<!DOCTYPE html>
-<html lang="zh">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Fast Data Collection for MAP Regression</title>
-
-<style>
-body {
-  background: #0f1117;
-  color: #e6e6e6;
-  font-family: "JetBrains Mono", monospace;
-  padding: 24px;
-  line-height: 1.6;
-}
-
-h2, h3 {
-  color: #8fe8ff;
-  font-weight: 600;
-}
-
-hr {
-  border: none;
-  height: 1px;
-  background: #2a2f3d;
-  margin: 28px 0;
-}
-
-/* 统一控制代码块外观（保持独立框）*/
-pre, .code-container {
-  background: #0b0d11;          /* 独立深色框，而不是灰底 */
-  border: 1px solid #22262f;    /* 明显外框 */
-  border-radius: 10px;
-  padding: 16px 18px;
-  overflow-x: auto;
-  margin: 20px 0;
-}
-
-/* 让 code 无底色 */
-code {
-  background: transparent !important;
-  color: #e9ecf1;
-  padding: 0;
-}
-
-/* Algorithm title inside block */
-.alg-title {
-  font-weight: bold;
-  color: #77d9ff;
-  display: block;
-  margin-bottom: 12px;
-  font-size: 16px;
-}
-
-/* Mobile optimization */
-@media (max-width: 600px) {
-  code {
-    font-size: 14px;
-  }
-}
-</style>
-</head>
-
-
-<body>
-
-<h2>3. Fast Data Collection for MAP Regression</h2>
-
+<h2 id="sec3">3. Fast Data Collection for MAP Regression</h2>
 <p>
 To efficiently train the Model Accuracy Predictor (MAP), we design two lightweight
 data‑collection procedures that avoid the high cost of full pruning and full‑epoch
@@ -351,133 +342,50 @@ finetuning.
 Both use a repeated <b>prune → fast‑finetune → evaluate</b> loop to obtain efficient,
 representative accuracy samples.
 </p>
+<h3>Algorithm 1 — Single-Type Progressive Pruning</h3>
+This procedure performs progressive pruning along a single layer type at a time. By increasing the pruning ratio in small steps and running a fast finetune‑and‑evaluate loop after each step, it collects smooth, low‑variance accuracy samples that trace a clear 1D pruning trajectory.
+<div class="svg-alg">
+  <img src="./algo1.svg" alt="Algorithm 1: Fast data collection (single layer type)">
+</div>
 
 <hr>
 
-<!-- Algorithm 1 -->
-<pre><code>
-<span class="alg-title">Algorithm 1: Fast Data Collection (Single Layer Type)</span>
-# Inputs
-Y0 = pretrained_model
-rds = num_rounds
-k   = pruning_budget
-L   = total_layers
-# Initialization
-train_data = [(m_a0, m_g0, a0)]
-def prune_along(layer_type, x0, xmax):
-    """Progressive pruning along a single layer type."""
-    for n in range(1, rds + 1):
-        # target pruning ratio
-        xn = x0 + n * (xmax - x0) / rds
-        # prune model
-        Yn = prune(Y[n-1], layer_type=layer_type, ratio=xn)
-        # fast finetune + evaluate
-        m_a, m_g, a = evaluate(Yn)
-        # save
-        train_data.append((m_a, m_g, a))
-# max ratios
-m_a_max = k / L
-m_g_max = k / L
-# two progressive sweeps
-prune_along("attention",  m_a0, m_a_max)
-prune_along("activation", m_g0, m_g_max)
-return train_data
-</code></pre>
-
-<hr>
-
-<!-- Algorithm 2 -->
-<pre><code>
-<span class="alg-title">Algorithm 2: Fast Data Collection (Interleaved Pruning)</span>
-# Inputs
-Y0 = pretrained_model
-rds = num_rounds
-k   = pruning_budget
-L   = total_layers
-# Initialization
-train_data = [(m_a0, m_g0, a0)]
-def prune_iterative((m_a0, m_g0), (m_a_max, m_g_max)):
-    for n in range(1, rds + 1):
-        # ----- Step 1: prune attention -----
-        m_a_n   = m_a0 + n     * (m_a_max - m_a0) / rds
-        m_g_n_1 = m_g0 + (n-1) * (m_g_max - m_g0) / rds
-        Y_temp = prune(Y[n-1], layer_type="attention", ratio=m_a_n)
-        # evaluate after attention prune
-        m_a, m_g, a = evaluate(Y_temp)
-        train_data.append((m_a, m_g, a))
-        # ----- Step 2: prune activation -----
-        m_g_n = m_g0 + n * (m_g_max - m_g0) / rds
-        Yn = prune(Y_temp, layer_type="activation", ratio=m_g_n)
-        # evaluate after activation prune
-        m_a, m_g, a = evaluate(Yn)
-        train_data.append((m_a, m_g, a))
-# max ratios
-m_a_max = k / L
-m_g_max = k / L
-prune_iterative((m_a0, m_g0), (m_a_max, m_g_max))
-return train_data
-</code></pre>
-
-<h3>Efficiency and Data Quality</h3>
-
-<ul>
-  <li><b>Progressive single‑type pruning</b> produces smooth 1D trajectories and low‑variance samples.</li>
-  <li><b>Interleaved pruning</b> explores the 2D pruning space and captures cross‑layer dependencies.</li>
-</ul>
-
+<h3>Algorithm 2 — Interleaved Pruning</h3>
+This procedure interleaves attention‑layer pruning and activation‑layer pruning within each round. By alternating the two types of pruning and evaluating after each sub‑step, it samples the 2D pruning space more fully and captures interactions between different layer types.
+<div class="svg-alg">
+  <img src="./algo2.svg" alt="Algorithm 2: Interleaved pruning">
+</div>
 <p>
 Together, these procedures create a compact yet expressive dataset for training MAP,
 dramatically reducing computation while retaining accuracy‑landscape fidelity.
 </p>
-
-</body>
-</html>
-<!-- ============================================================
-     4. MAP 的运行例子
-============================================================ -->
-<h2>4. Numerical Example of MAP Fitting</h2>
-
-<p>
-This example demonstrates how MAP (Mean Accuracy Prediction) is fitted using
-the retained layer ratios \( a = n_a/L \) and \( t = n_g/L \) for DeiT-Base (\(L=12\)).
-The original pruning specifications are given in discrete layer counts, which are
-converted to continuous retained ratios through
-</p>
-
-<p style="text-align:center;">
-\[
-a = \frac{n_a}{L}, \qquad 
-t = \frac{n_g}{L}.
-\]
-</p>
-
-<p>
-The pruning ratios used elsewhere in the paper are 
-\(\tilde{m}_a = 1 - a\) and \(\tilde{m}_g = 1 - t\), representing the <em>pruned</em> fractions.
-The pruning budget \(k\) corresponds to the linear constraint
-</p>
-
-<p style="text-align:center;">
-\[
-a + t = 2 - \frac{k}{L}.
-\]
-</p>
-
 <hr>
 
-<h3>Dataset</h3>
+
+<!-- ============================================================
+     4. Numerical Example
+============================================================ -->
+<!-- ============================================================
+     4. Numerical Example
+============================================================ -->
+<h2 id="sec4">4. Numerical Example of MAP Fitting</h2>
 
 <p>
-For DeiT-Base with \(L=12\), the following table lists several evaluated configurations
-in terms of retained ratios \((a,t)\) and their ImageNet validation accuracy:
+We illustrate the complete MAP construction pipeline using DeiT‑Base
+with \(L = 12\). The pruning configuration is specified by the retained
+ratios
+\[
+a = n_a/L, \qquad t = n_g/L.
+\]
+The example dataset below lists several measured accuracies after
+progressive pruning and fast finetuning.
 </p>
+
+<h3>Example Dataset</h3>
 
 <table>
 <thead>
-<tr>
-<th>a</th><th>t</th><th>Accuracy (%)</th>
-<th>a</th><th>t</th><th>Accuracy (%)</th>
-</tr>
+<tr><th>a</th><th>t</th><th>Acc (%)</th><th>a</th><th>t</th><th>Acc (%)</th></tr>
 </thead>
 <tbody>
 <tr><td>1.00</td><td>1.00</td><td>81.80</td><td>1.00</td><td>0.92</td><td>81.07</td></tr>
@@ -494,319 +402,251 @@ in terms of retained ratios \((a,t)\) and their ImageNet validation accuracy:
 </tbody>
 </table>
 
+<p>
+In this setting, the pruning budget dictates the linear constraint
+\[
+a + t = 2 - \frac{k}{L},
+\]
+which we will search over after fitting the polynomial MAP model.
+</p>
+
 <hr>
 
-<h3>Polynomial Fitting with L2OCV</h3>
+<h3>Polynomial Approximation and L2O‑CV</h3>
 
 <p>
-MAP is approximated by a bivariate polynomial of degree \(\kappa\):
-</p>
-
-<p style="text-align:center;">
+We approximate the accuracy function with a bivariate polynomial
 \[
-\mathcal{P}(a,t;\Theta) = \sum_{i+j \le \kappa} \theta_{ij} a^i t^j.
+\mathcal{P}(a,t;\Theta)
+= \sum_{i+j\le \kappa} \theta_{ij} a^i t^j.
 \]
+Leave‑2‑Out Cross‑Validation (L2OCV) is performed over degrees
+\(\kappa \in \{1,2,3,4\}\). For each \(\kappa\), we repeatedly remove two
+samples, fit least squares on the rest, predict the held‑out points, and
+compute MAE/RMSE. The model with the lowest validation RMSE is selected
+and refit using all samples.
 </p>
 
 <p>
-Leave‑2‑out cross‑validation over \(\kappa\in\{1,2,3,4\}\) selects 
-\(\kappa=2\) with the following validation errors:
+For the dataset above with pruning budget \(a+t=16/12\),
+L2OCV selects degree \(\kappa=2\), yielding
 </p>
 
-<p style="text-align:center;">
-\[
+$$
 \text{MAE} = 0.4066, \qquad
 \text{RMSE} = 0.4870.
-\]
-</p>
+$$
 
 <p>
-Fitting a quadratic polynomial on the full dataset yields
+The final fitted quadratic MAP is:
 </p>
 
-<p style="text-align:center;">
-\[
-\hat{\mathcal{P}}(a,t)
-= 31.68 + 50.65\,a + 39.29\,t
-- 19.79 a^2 - 8.34\,a t - 11.70\,t^2.
-\]
-</p>
+$$
+\hat{\mathcal P}(a,t)
+= 31.68
++ 50.65 a
++ 39.29 t
+- 19.79 a^2
+- 8.34 a t
+- 11.70 t^2.
+$$
 
 <p>
-The unrounded coefficients are  
-31.684374, 50.653461, 39.298158, −19.795489, −8.338992, −11.704586
-for the terms \(1, a, t, a^2, at, t^2\) respectively.
+Unrounded coefficients (in order \(1,a,t,a^2,at,t^2\)) are:
+31.684374, 50.653461, 39.298158,
+−19.795489, −8.338992, −11.704586.
 </p>
 
 <hr>
 
-<h3>Equivalent Form in Pruning Ratios</h3>
+<h3>Inverse Transformation to Pruning Ratios</h3>
 
 <p>
-Using the inverse transformation  
-\(\tilde{m}_a = 1-a\), \(\tilde{m}_g = 1-t\),  
-the fitted polynomial becomes
+Since pruning ratios are defined as
+\[
+\tilde{m}_a = 1-a, \qquad \tilde{m}_g = 1-t,
+\]
+we obtain the equivalent MAP in \((\tilde m_a,\tilde m_g)\):
 </p>
 
-<p style="text-align:center;">
-\[
-\mathcal{P}(\tilde{m}_a,\tilde{m}_g)
+$$
+\mathcal{P}(\tilde m_a,\tilde m_g)
 = 81.79
 - 2.73\,\tilde m_a
 - 7.55\,\tilde m_g
-- 19.79\,\tilde m_a^2
+- 19.79\,\tilde m_a^{2}
 - 8.34\,\tilde m_a\tilde m_g
-- 11.70\,\tilde m_g^2.
+- 11.70\,\tilde m_g^{2}.
+$$
+
+<hr>
+
+<h3>Optimal Configuration Under Budget</h3>
+
+<p>
+The pruning budget requires:
+\[
+\tilde m_a + \tilde m_g = \frac{k}{L}.
 \]
-\]
+Since each variable lies in the discrete set
+\(\{0,1/L,\dots,1\}\),
+the optimal configuration can be obtained by enumerating all feasible
+pairs and selecting the one with the highest predicted accuracy.
+</p>
+
+<div class="svg-alg">
+  <img src="./algo3.svg" alt="Algorithm 3">
+</div>
+
+<p>
+Equivalently, optimization may be performed in the retained‑ratio space
+\((a,t)\) along
+\(a+t=2-k/L\) and then mapped back via
+\(\tilde m_a^\star=1-a^\star\), \(\tilde m_g^\star=1-t^\star\).
+Both approaches are mathematically identical because the transformation
+is linear.
 </p>
 
 <hr>
 
-<h3>Discrete Optimization Under a Budget</h3>
 
-<p>
-The pruning budget constraint is
-</p>
-
-<p style="text-align:center;">
-\[
-\tilde m_a + \tilde m_g = \frac{k}{L}.
-\]
-</p>
-
-<p>
-Since pruning ratios lie on a small discrete grid, the optimal pair  
-\((\tilde m_a^\star,\tilde m_g^\star)\) can be found by 
-evaluating all feasible points on the line and taking the best predicted MAP.
-This exhaustive search is extremely fast in practice.
-</p>
 <!-- ============================================================
-     5. MAP 的鲁棒性
+     5. Robustness of MAP
 ============================================================ -->
-<h2>5. Robustness of MAP</h2>
+<h2 id="sec5">5. Robustness of MAP Under Prediction Noise</h2>
 
 <p>
-To evaluate the stability of the MAP fitting procedure under noisy or imperfect accuracy
-measurements, we perform a Monte‑Carlo noise‑injection experiment.
-Given the original dataset of retained ratios \((a,t)\) and accuracies, we inject bounded
-Gaussian noise into the accuracy observations and repeat the full MAP fitting pipeline:
-Leave‑2‑out cross‑validation, polynomial degree selection, coefficient estimation,
-and discrete search along the budget constraint.
-For each noisy dataset, we record the optimal configuration \((a^\star,t^\star)\) predicted by MAP.
+Because MAP is constructed from fast‑finetuning accuracy measurements,
+it is important to assess whether small prediction errors could influence
+the final pruning‑ratio decision. Since MAP ultimately selects a pruning
+configuration from a <b>finite grid</b> along the constraint
+\(a+t = 2 - k/L\), the choice is expected to be stable as long as noise
+does not significantly change the relative ordering among neighboring
+grid points.
 </p>
 
+<hr>
+
+<h3>Experimental Setup</h3>
+
 <p>
-Specifically, accuracy noise is generated as
+Using the dataset in Section&nbsp;4 (DeiT‑Base, \(L=12\)), we perform a
+Monte‑Carlo robustness study by injecting controlled noise into all
+measured accuracies. For each accuracy sample \(y_i\), we add zero‑mean
+noise clipped to ±0.5%:
 \[
-y_{\text{noisy}} = y + \operatorname{clip}(\mathcal{N}(0,0.1^2), -\sigma, \sigma),
+y_i^{(\text{noisy})} = y_i + \varepsilon_i,\qquad
+\varepsilon_i \sim \mathrm{clip}(\mathcal{N}(0,0.1), -0.5, 0.5).
 \]
-with noise bound \(\sigma=0.5\).
-We repeat the procedure 500 times and compare the resulting \((a^\star, t^\star)\)
-with the baseline clean-data optimum.
+For each noisy dataset (500 trials):
 </p>
 
-<h3>Python code used in the robustness experiment</h3>
+<ol>
+  <li>Leave‑2‑Out cross‑validation is performed over polynomial degrees \(1\!-\!4\).</li>
+  <li>The degree with the lowest validation RMSE is selected.</li>
+  <li>The polynomial is refitted on all noisy data.</li>
+  <li>The optimal pruning ratios are computed along the discrete constraint line \(a+t=16/12\).</li>
+</ol>
 
-<pre><code>
-import numpy as np
-from itertools import combinations
+<p>
+The baseline (noise‑free) MAP selects:
+\[
+(a^\star,t^\star) = (0.667,\;0.667).
+\]
+</p>
 
-TOTAL_SUM_NUM = 16
-
-data = np.array([
-    (1.00, 1.00, 81.8), (0.92, 1.00, 81.31), (0.83, 1.00, 80.9),
-    (0.75, 1.00, 80.2), (0.67, 1.00, 78.2), (0.58, 1.00, 77.4),
-    (1.00, 0.92, 81.26), (1.00, 0.83, 80.4), (1.00, 0.75, 78.9),
-    (1.00, 0.67, 77.8), (1.00, 0.58, 76.7),
-    (0.92, 0.92, 80.34), (0.92, 0.83, 80.03),
-    (0.83, 0.83, 78.88), (0.83, 0.75, 78.08),
-    (0.75, 0.75, 76.52),
-], dtype=float)
-
-A, y = data[:, :2], data[:, 2]
-
-def exps(k): 
-    return [(i, t - i) for t in range(k + 1) for i in range(t + 1)]
-
-def Phi(A, k):
-    E = exps(k)
-    return np.stack([np.prod(np.power(x, E), axis=1) for x in A], 0)
-
-def fit(X, y):
-    return np.linalg.lstsq(X, y, rcond=None)[0]
-
-def pred(X, c):
-    return X @ c
-
-def l2ocv(A, y, k):
-    N = len(y)
-    P = np.zeros(N)
-    C = np.zeros(N, int)
-    for i, j in combinations(range(N), 2):
-        m = np.ones(N, bool)
-        m[[i, j]] = False
-        c = fit(Phi(A[m], k), y[m])
-        for t in (i, j):
-            P[t] += pred(Phi(A[[t]], k), c)[0]
-            C[t] += 1
-    e = P/C - y
-    return np.mean(np.abs(e)), np.sqrt(np.mean(e**2))
-
-def search_best(c, k, total=TOTAL_SUM_NUM):
-    kmin, kmax = max(1, total - 11), min(11, total - 1)
-    cand = []
-    for s in range(kmin, kmax + 1):
-        a, t = s/12, (total - s) / 12
-        acc = float(pred(Phi(np.array([[a, t]]), k), c)[0])
-        cand.append((s, a, t, acc))
-    return max(cand, key=lambda z: z[3]), cand
-
-def test_noise_sigma(sigma=0.5, repeats=100):
-    results = []
-    np.random.seed(42)
-    for _ in range(repeats):
-        raw = np.random.normal(0, 0.1, size=len(y))
-        y_noisy = y + np.clip(raw, -sigma, sigma)
-        best = None
-        best_rmse = 1e9
-        for deg in [1, 2, 3, 4]:
-            mae, rmse = l2ocv(A, y_noisy, deg)
-            C = fit(Phi(A, deg), y_noisy)
-            (s, a, t, acc), _ = search_best(C, deg)
-            if rmse &lt; best_rmse:
-                best_rmse = rmse
-                best = (a, t)
-        results.append(best)
-    pts = np.array(results)
-    print(f"sigma = {sigma}")
-    print("mean (a, t) =", pts.mean(axis=0))
-    print("std  (a, t) =", pts.std(axis=0))
-    return pts
-
-pts_sigma_05 = test_noise_sigma(sigma=0.5, repeats=500)
-
-def analyze_changes(pts, base_point, tol=1e-9):
-    base_a, base_t = base_point
-    delta_layer = 1/12.0
-    same = 0
-    one_layer = 0
-    more_layers = 0
-    for a, t in pts:
-        da = abs(a - base_a)
-        dt = abs(t - base_t)
-        diff = max(da, dt)
-        if diff &lt;= tol:
-            same += 1
-        elif abs(diff - delta_layer) &lt;= 1e-6:
-            one_layer += 1
-        else:
-            more_layers += 1
-    total = len(pts)
-    return {
-        "same_ratio": same / total,
-        "one_layer_ratio": one_layer / total,
-        "more_layers_ratio": more_layers / total,
-        "same": same,
-        "one_layer": one_layer,
-        "more_layers": more_layers,
-        "total": total
-    }
-
-results = []
-for deg in [1, 2, 3, 4]:
-    mae, rmse = l2ocv(A, y, deg)
-    C = fit(Phi(A, deg), y)
-    best, _ = search_best(C, deg)
-    results.append((deg, rmse, best))
-deg0, rmse0, (s0, a0, t0, acc0) = min(results, key=lambda x: x[1])
-base_point = (a0, t0)
-
-stats = analyze_changes(pts_sigma_05, base_point)
-
-print("Baseline best (a,t) =", base_point)
-print("Same:", stats["same"], "/", stats["total"])
-print("1-layer:", stats["one_layer"])
-print("More:", stats["more_layers"])
-</code></pre>
+<hr>
 
 <h3>Results</h3>
 
 <p>
-Using \(\sigma = 0.5\) and 500 trials, the experiment yields:
+Across 500 perturbed datasets, the MAP‑predicted optimal pruning ratios
+show the following distribution:
 </p>
 
 <ul>
-  <li><strong>Mean predicted configuration:</strong>  
-  \[
-  (a,t)_{\text{mean}} = (0.6215,\; 0.7118)
-  \]</li>
-
-  <li><strong>Standard deviation:</strong>  
-  \[
-  \operatorname{std}(a,t) = (0.1034,\; 0.1034)
-  \]</li>
-
-  <li><strong>Baseline optimum (clean data):</strong>  
-  \[
-  (a^\*, t^\*) = (2/3,\; 2/3) = (0.6667,\, 0.6667)
-  \]</li>
+  <li><b>75.0%</b> of predictions match the baseline exactly.</li>
+  <li><b>5.2%</b> deviate by only <b>one layer</b>
+      (a shift of ±1/12 in either \(a\) or \(t\)).</li>
+  <li><b>19.8%</b> differ by more than one layer.</li>
 </ul>
 
 <p>
-The classification of deviations from the baseline optimum is:
+The mean and standard deviation of predicted optima are:
 </p>
 
-<ul>
-  <li><strong>Exactly the same optimum:</strong> 375 / 500 (75%)</li>
-  <li><strong>Off by one layer:</strong> 26 / 500 (5.2%)</li>
-  <li><strong>More than one layer off:</strong> 99 / 500 (19.8%)</li>
-</ul>
+$$
+\mathbb{E}[a,t] = (0.622,\;0.712),\qquad
+\mathrm{Std}[a,t] = (0.103,\;0.103).
+$$
+
+<p>
+Given the grid resolution (1/12 ≈ 0.083), this indicates that the
+optimal point remains tightly concentrated around the baseline solution.
+Over 80% of all noisy trials stay within 1‑layer deviation, confirming
+that MAP’s pruning‑ratio decision is quantitatively stable under
+realistic noise levels.
+</p>
+
+<hr>
 
 <h3>Interpretation</h3>
 
 <p>
-Despite extremely large injected noise (\(\sigma = 0.5\), far exceeding typical accuracy
-variation in practice), the MAP prediction remains <strong>highly stable</strong>:
-75% of the trials recover the identical pruning configuration, and 80.2% (375+26)
-remain within one layer of the true optimum. Deviations larger than one layer occur only
-when noise severely distorts the accuracy landscape, especially near flat regions where
-several configurations yield similar accuracy.
+The robustness arises from three factors:
 </p>
+
+<ul>
+  <li>The pruning search space is discrete, so small prediction errors do not easily reorder neighboring candidates.</li>
+  <li>The polynomial model produces a smooth accuracy surface, preventing abrupt changes in the optimum.</li>
+  <li>Leave‑2‑Out CV automatically avoids overfitting to noisy samples and stabilizes degree selection.</li>
+</ul>
 
 <p>
-This confirms that the MAP polynomial fit is robust to measurement noise and reliably
-identifies optimal or near-optimal pruning configurations even under substantial perturbations.
+Overall, MAP provides <b>stable pruning‑ratio recommendations</b> even when
+trained on noisy fast‑finetuning measurements, demonstrating that the
+approach is reliable in realistic, noise‑affected settings.
 </p>
 
+<hr>
+
+
 <!-- ============================================================
-     6. MAP 的运行耗时
+     6. Runtime
 ============================================================ -->
-<h2>6. Runtime Overhead</h2>
+<h2 id="sec6">6. Runtime Overhead</h2>
 
-MAP 的运行开销主要包括：
+<p>
+All computation is performed on a single Ascend 910B2 NPU.  
+The overall cost is dominated by fast data collection, while MAP regression and pruning‑ratio optimization incur negligible overhead.
+</p>
 
-<h3>6.1 数据采集（Stage 1 Step 1）</h3>
+<h3>Time Consumption</h3>
+<ul>
+  <li><b>Fast data collection:</b><br>
+      A 100k‑image subset of ImageNet (approximately 1/12 of the full dataset) is used.  
+      The fast‑finetuning speed is 2 minutes per epoch on a single 910B2 NPU.  
+      MAP requires <b>368 epochs</b> of such fast finetuning, resulting in  
+      <b>368 × 2 min ≈ 12.2 hours</b>.
+  </li>
 
-你报告的时间：
+  <li><b>MAP regression and degree selection:</b><br>
+      Polynomial fitting and L2O‑CV require <b>less than 1 minute</b>,  
+      which is negligible relative to data collection.
+  </li>
 
-- 约 **7 小时**
+  <li><b>Redundant‑layer identification:</b><br>
+      After determining the optimal pruning ratios through MAP, the pruned model is trained for <b>60 epochs</b>,  
+      taking approximately <b>2 hours</b>.
+  </li>
 
-原因：  
-每个采样点需要「快速微调 + 测量 accuracy」。
+  <li><b>Total runtime:</b> ~<b>14 hours</b>.</li>
+</ul>
 
-<h3>6.2 MAP 回归（Stage 1 Step 1）</h3>
-
-计算量非常小：
-
-- 二次多项式只有 6 个参数  
-- 数据规模约 20–30 个点  
-- 求解一次最小二乘回归 <b>仅需毫秒级</b>
-
-实际统计：
-
-- **几乎可以忽略不计（&lt; 0.01 秒）**
-
+<h3>Memory Usage</h3>
+<ul>
+  <li>Peak memory consumption is approximately <b>60 GB</b> on a single Ascend 910B2 NPU.</li>
+</ul>
 
 </body>
 </html>
