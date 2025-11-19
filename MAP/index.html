@@ -374,9 +374,9 @@ dramatically reducing computation while retaining accuracy‑landscape fidelity.
 We illustrate the complete MAP construction pipeline using DeiT‑Base
 with \(L = 12\). The pruning configuration is specified by the retained
 ratios
-\[
+$$
 a = n_a/L, \qquad t = n_g/L.
-\]
+$$
 The example dataset below lists several measured accuracies after
 progressive pruning and fast finetuning.
 </p>
@@ -404,9 +404,9 @@ progressive pruning and fast finetuning.
 
 <p>
 In this setting, the pruning budget dictates the linear constraint
-\[
+$$
 a + t = 2 - \frac{k}{L},
-\]
+$$
 which we will search over after fitting the polynomial MAP model.
 </p>
 
@@ -416,10 +416,10 @@ which we will search over after fitting the polynomial MAP model.
 
 <p>
 We approximate the accuracy function with a bivariate polynomial
-\[
+$$
 \mathcal{P}(a,t;\Theta)
 = \sum_{i+j\le \kappa} \theta_{ij} a^i t^j.
-\]
+$$
 Leave‑2‑Out Cross‑Validation (L2OCV) is performed over degrees
 \(\kappa \in \{1,2,3,4\}\). For each \(\kappa\), we repeatedly remove two
 samples, fit least squares on the rest, predict the held‑out points, and
@@ -463,9 +463,9 @@ Unrounded coefficients (in order \(1,a,t,a^2,at,t^2\)) are:
 
 <p>
 Since pruning ratios are defined as
-\[
+$$
 \tilde{m}_a = 1-a, \qquad \tilde{m}_g = 1-t,
-\]
+$$
 we obtain the equivalent MAP in \((\tilde m_a,\tilde m_g)\):
 </p>
 
@@ -485,9 +485,9 @@ $$
 
 <p>
 The pruning budget requires:
-\[
+$$
 \tilde m_a + \tilde m_g = \frac{k}{L}.
-\]
+$$
 Since each variable lies in the discrete set
 \(\{0,1/L,\dots,1\}\),
 the optimal configuration can be obtained by enumerating all feasible
@@ -534,10 +534,10 @@ Using the dataset in Section&nbsp;4 (DeiT‑Base, \(L=12\)), we perform a
 Monte‑Carlo robustness study by injecting controlled noise into all
 measured accuracies. For each accuracy sample \(y_i\), we add zero‑mean
 noise clipped to ±0.5%:
-\[
+$$
 y_i^{(\text{noisy})} = y_i + \varepsilon_i,\qquad
 \varepsilon_i \sim \mathrm{clip}(\mathcal{N}(0,0.1), -0.5, 0.5).
-\]
+$$
 For each noisy dataset (500 trials):
 </p>
 
@@ -550,9 +550,9 @@ For each noisy dataset (500 trials):
 
 <p>
 The baseline (noise‑free) MAP selects:
-\[
+$$
 (a^\star,t^\star) = (0.667,\;0.667).
-\]
+$$
 </p>
 
 <hr>
