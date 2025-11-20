@@ -245,155 +245,86 @@ We hope the revisions and explanations above address all concerns and improve th
 
 
 
-# Response to Reviewer 4wzp (Revised & Polished)
 
-**We sincerely thank the reviewer for the thoughtful questions and for the willingness to reconsider the score.**  
-Below we provide concise, direct, and technically grounded answers, with references to MAP, Proposition 4, and Proposition 5 where appropriate.
+# Reviewer 4wzp
 
----
-
-### **Q1. Does MAP need to be retrained for different architectures (e.g., Swin, ViT‑Large) or datasets? What is the prediction error if transferred directly?**
-
-Thank you for this excellent question.
-
-- **Within the same family of architectures (e.g., DeiT models), MAP does *not* need to be refitted.**  
-  It still correctly predicts pruning *ratios*, although the exact pruned layers must be re‑identified.
-
-- **Across different architectures (e.g., transferring MAP from DeiT to Swin), refitting is required.**  
-  Fortunately, the computational overhead is small: MAP can be reconstructed **within 14 hours on a single 910B2 NPU** (details in *MAP s6*).
-
-- **Direct transfer without refitting leads to noticeable prediction error**, often corresponding to **≈2 layers mismatch**, which is expected because different architectures have distinct pruning‑sensitivity landscapes.
-
-We will include this clarification in the revision.
+**We sincerely thank the reviewer for the detailed questions and for the willingness to reconsider the score.**  
+Below we address each question concisely and directly, while providing technical grounding drawn from the MAP webpage and the theoretical foundation page.
 
 ---
 
-### **Q2. If MAP has ±0.5% prediction noise, will the final pruning decision change? Has the paper evaluated MAP’s sensitivity?**
+**Q1：** 论文使用一个二次多项式作为模型精度预测器（MAP）。请问该 MAP 是否需要针对不同架构（如 Swin、ViT-Large）或数据集重新拟合？若直接迁移使用，预测误差会有多大？
 
-Yes.  
-We conducted a dedicated robustness experiment (see *MAP §5*), injecting clipped Gaussian noise into all measured accuracies and running 500 Monte‑Carlo trials.
+感谢您的提问，这是一个很好的问题，根据我们的观察，同一种类型的模型(例如Deit系列的模型)，MAP是不需要重新拟合的(但是依然只能确定比例，具体的剪枝位置需要重新确定)，针对不同的架构是需要重新拟合的，但是重新拟合的overhead很小，通常我们只需要一张NPU在14h以内便可以重新拟合了。若直接迁移，预测误差会比较大，例如直接使用Deit拟合得到的MAP去拟合Swin，大概率会有2个层的预测误差。
 
-Key findings:
 
-- **75.0%** of trials reproduced the *exact* pruning decision.  
-- **5.2%** deviated by only **one layer** (±1/12).  
-- **19.8%** deviated by more than one layer.  
-- A one‑layer deviation leads to final accuracy changes within **≤0.3%**.
 
-Thus **>80%** of noisy trials stay within a one‑layer deviation, demonstrating that MAP’s pruning‑ratio decision is **highly robust**.
+**Q2：** 如果 MAP 存在偏差（例如 Top-1 误差 ±0.5%），最终的剪枝比例决策是否会被完全改变？论文是否评估过 MAP 对剪枝策略的敏感性？
 
----
+感谢您的提问，我们补充进行了MAP的鲁棒性实验，具体的实验细节请参考[Robutness Exp of MAP](https://anonconf2025.github.io/MAP/#sec5),通过加噪声并进行蒙特卡洛模拟，我们发现，75%的情况下MAP预测结果不改变，5.2%预测结果偏离一层，剩余的19.8%预测结果偏离1层以上，而结果偏离一层对于最终剪枝模型的精度在0.3%以内，我认为我们的MAP在80%以上的情况不会偏离太多，这证明了我们的MAP结果是比较鲁棒的。
 
-### **Q3. How do you ensure that “activation pruning + linear‑layer fusion” does not break residual connections or LayerNorm?**
 
-Our pruning only affects:
+**Q3：** 在执行“剪枝激活层 + 合并线性层”时，如何确保残差连接与 LayerNorm 不会破坏模型的稳定性？是否存在严格的数学条件保证该融合操作无害或近似无害？
 
-- **attention layers**, and  
-- **activation (GELU) layers**.
+感谢您的提问，我们进行剪枝的时候，只针对Attention层和activation层进行操作，而合并线性层的过程只在FFN层内进行操作，而残差连接与 LayerNorm 都在这两个层以外的，因此我们的剪枝并不会影响这两个操作，因此不会破坏模型的稳定性,并且正如[ViT latency](https://anonconf2025.github.io/fig/vit_latency.svg)所展示的，attention和linear占据了80%以上的计算时间，
+因此我们剪枝只针对这两种层进行操作是合理的。同时，只针对FFN进行层合并数学上是等价的，即两个矩阵相乘可以等效一个单矩阵相乘(考虑bias同样也成立)
 
-Linear‑layer fusion is performed **only inside the FFN block**, where:
-x + FFN(x)
-FFN = W2(GELU(W1 x))
-Residual connections and LayerNorm are **outside** the fused region. Therefore:
 
-- Residual pathway is untouched  
-- LayerNorm statistics remain unchanged  
-- Fusion is algebraically valid: `(W2 · W1_eff)` is equivalent to merging two linear layers with bias
+**Q4：** 若应用于带门控机制（如 SwiGLU）或 Post-Norm 的 ViT 变体，是否仍可直接进行层融合？论文是否验证过这种情况下的有效性？
 
-This is consistent with **vit_latency.svg**, showing that attention + FFN dominate runtime.
+感谢您的提问，这是一个很好的回答
+(1) 针对SwiGLU我们确实没有办法进行直接的等价合并(因为有哈达玛积的存在)，但是通常我们可以将SwiGLU转化为Linear+激活+Linear的形式再进行层融合，前者的转换在相关工作(Relu strikes back)中已经进行了探索，因此我们认为我们的工作是仍然有效的
+(2) 正如在Q3提到的，我们的层融合是不涉及Layer-Norm的，因此针对Post-Norm的ViT我们仍然是可以进行层融合的，这种情况下仍然是有效的
 
----
 
-### **Q4. Does layer fusion still work for SwiGLU or post‑Norm Transformers?**
+**Q5：** 论文指出，裁剪激活层会导致初始损失较大但恢复更快，而裁剪注意力层则相反。该现象在不同随机种子或更长训练周期下是否依然存在？若微调周期延长至 50 个 epoch，这种“恢复不对称性”是否仍明显？
+在更长训练周期下仍然存在，我们在cifar100上进行了测试，数据如下：
+    full_acc	86.80%										
+seed=42,epoch=10												
+    layer 0	layer 1	layer 2	layer 3	layer 4	layer 5	layer 6	layer 7	layer 8	layer 9	layer 10	layer 11
+act	1.00%	1.00%	1.00%	1.00%	1.00%	1.00%	1.31%	1.03%	0.00%	1.00%	1.93%	4.51%
+act-ft	83.97%	84.82%	84.87%	83.69%	84.18%	84.99%	85.00%	85.67%	85.11%	86.17%	86.73%	86.85%
+attn	85.29%	85.23%	85.71%	85.21%	85.31%	85.64%	85.95%	85.82%	85.68%	85.55%	86.10%	86.33%
+attn-ft	86.40%	86.20%	86.10%	86.10%	85.80%	86.10%	86.20%	86.47%	85.90%	86.03%	86.37%	86.35%
+                                                
+seed=42,epoch=50												
+    layer 0	layer 1	layer 2	layer 3	layer 4	layer 5	layer 6	layer 7	layer 8	layer 9	layer 10	layer 11
+act	1.00%	1.00%	1.00%	1.00%	1.00%	1.00%	1.31%	1.03%	0.00%	1.00%	1.93%	4.51%
+act-ft	85.92%	85.72%	85.70%	86.14%	85.85%	86.16%	86.17%	86.58%	86.92%	86.92%	87.04%	86.83%
+attn	85.29%	85.23%	85.71%	85.21%	85.31%	85.64%	85.95%	85.82%	85.68%	85.55%	86.10%	86.33%
+attn-ft	86.72%	86.54%	86.46%	86.60%	86.49%	86.39%	86.53%	86.60%	86.64%	86.25%	86.85%	86.89%
 
-Yes, with minor considerations:
+xxxxxx
 
-1. **SwiGLU:**  
-   Direct fusion is not possible due to Hadamard interactions.  
-   However, SwiGLU can be reparameterized into “Linear → activation → Linear”, as shown in *ReLU Strikes Back*, after which our fusion applies.
 
-2. **Post‑Norm ViTs:**  
-   Fusion remains fully compatible, since it does **not** involve LayerNorm at all.
 
----
+**Q6：** 导致这种恢复差异的根本原因是什么？是仅由梯度幅值差异造成，还是与信息流路径或残差分布相关？论文未提供理论上的解释。
 
-### **Q5. Does recovery asymmetry persist under different seeds or longer finetuning (e.g., 50 epochs)?**
+具体的解释可以参考我们的数学证明：https://anonconf2025.github.io/MathProof/prof5.html
 
-Yes.  
-We tested on CIFAR‑100 (seeds and finetuning epochs = 10 and 50). Across all layers:
 
-- **Activation pruning**: large initial drop, **very fast recovery**  
-- **Attention pruning**: small initial drop, **slower recovery**
 
-The asymmetry remains consistent across seeds and longer training schedules.
 
----
+**Q7：** BoundaryDPT 仅在 ImageNet 分类上评估。若应用于下游任务（如 COCO 检测、ADE20K 分割或 ImageNet-A 鲁棒性测试），是否仍能保持相似的精度–加速折中性能？
 
-### **Q6. What fundamentally causes this recovery asymmetry? Is it purely gradient magnitude or also information flow?**
+我们将我们的方法已经应用到下游任务中了，Table 4展示了我们在ADE20K上的实验结果，实验证明对比baseline，我们仍然保持相似的精度–加速折中性能
 
-The full theoretical explanation is in **Proposition 5**.
 
-- The activation branch contributes a **dominant portion** of the residual output → large initial drop  
-- Activation gradients are **1–2 orders larger** than attention gradients (from **Proposition 4**) → **10–100× faster recovery**
 
-Thus both **representational dominance** and **gradient scale** jointly cause the asymmetry.
+**Q8：** “BoundaryDPT 与 token 剪枝严格正交”的结论仅基于单一 token 方法（GTP-ViT）与单一剪枝率。若更换 token 策略或提高剪枝率，该正交性是否依然成立？
 
----
+感谢您的提问，我们补充了我们方法与ToMe结合的效果，具体实验结果如tome_dpt.pdf所示，实验证明了此时正交性仍然成立，同时我们也改变了剪枝率进行了测试,具体实验结果如gtp-dpt-pruning-8layers.pdf所示，实验证明更换了剪枝率，正交性仍然成立。 以上的实验结果说明，我们的方法与token剪枝正交
 
-### **Q7. Can BoundaryDPT generalize to downstream tasks (COCO, ADE20K, robustness benchmarks)?**
 
-Yes.  
-BoundaryDPT modifies only the ViT backbone, making it task‑agnostic.
 
-We evaluated the method on:
+**Q9：** 论文在 Ascend 910B NPU 上训练，却在 NVIDIA H800 GPU 上测量推理吞吐量。所有基线结果是否都重新测量过？若没有，该吞吐量比较是否公平？
 
-- **ADE20K segmentation (Table 4)**  
-- **CIFAR transfer (Table 3)**  
+感谢您的提问，我们所有的基线都在H800重新测量过了
 
-Both show comparable or improved accuracy–speed tradeoff relative to baselines.  
-We expect similar behavior on COCO; compute limitations prevented us from including it.
 
----
 
-### **Q8. Is the orthogonality to token pruning universal across token methods and pruning rates?**
+**Q10：** MAP 的构建需要多轮“剪枝–微调–评估”的采样，但论文未说明具体样本数量或计算开销。在实际环境中训练 MAP 需要多少 GPU 天？是否能在有限算力条件下复现？
 
-Yes.  
-We conducted supplementary experiments:
+https://anonconf2025.github.io/MAP/#sec6 我们补充了样本数量(10w张样本)和runtime overhead的信息，在1张NPU上去构建MAP需要14h，我们认为这是可以在有限算力条件下复现的
 
-- BoundaryDPT + **ToMe** (`tome_dpt.pdf`)  
-- BoundaryDPT + **GTP‑ViT** at different pruning ratios (`gtp-dpt-pruning-8layers.pdf`)
 
-Both confirm that:
-
-- Orthogonality holds  
-- Performance improvements remain consistent across token strategies and pruning rates
-
----
-
-### **Q9. Were all throughput results re-measured fairly on the same device (H800)?**
-
-Yes.  
-All baselines were re‑measured on the **same NVIDIA H800 GPU** to ensure a fair comparison.
-
----
-
-### **Q10. How many samples does MAP require, and what is the actual compute cost? Can it be reproduced under limited resources?**
-
-From *MAP §6*:
-
-- **Dataset:** 100k ImageNet subset (~1/12)  
-- **Fast finetuning:** 2 minutes/epoch on Ascend 910B2  
-- **MAP requires 368 epochs → ~12.2 hours**  
-- **MAP fitting + CV:** <1 minute  
-- **Redundant‑layer identification:** ~2 hours  
-
-**Total cost: ~14 hours on a single NPU**, fully reproducible under modest compute.
-
----
-
-# Final Remark
-
-We sincerely appreciate the reviewer’s thorough questions and constructive feedback.  
-Your comments helped us significantly strengthen the explanations of MAP robustness, fusion safety, recovery asymmetry, and cross‑task generalization.
-
-We hope this improved response adequately addresses all concerns.

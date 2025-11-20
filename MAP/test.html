@@ -172,6 +172,7 @@ Since the search space is finite, once MAP is constructed, the optimal pruning
 configuration can be obtained by direct enumeration:
 </p>
 
+
 $$
 (\tilde{m}_a^\star,\tilde{m}_g^\star)
 =
@@ -647,6 +648,8 @@ The overall cost is dominated by fast data collection, while MAP regression and 
 <ul>
   <li>Peak memory consumption is approximately <b>60 GB</b> on a single Ascend 910B2 NPU.</li>
 </ul>
-
+$$
+\hat{m}=binarize{\bar{m}}
+$$
 </body>
 </html>
