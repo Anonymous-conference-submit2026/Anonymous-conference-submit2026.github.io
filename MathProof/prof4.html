@@ -147,10 +147,10 @@ $$
 <p><i>Justification:</i></p>
 <ol>
   <li>
-    <b>Boundedness of \(\mathcal{A}_l\):</b> The attention output is constrained by Softmax and LayerNorm (typically applied before or after the block), approximating a distribution \(\mathcal{N}(0, 1)\). Thus, the deviation from \(I\) (value 1) is small and bounded.
+    <b>Boundedness of \(\mathcal{A}_l\):</b> The attention output is constrained by Softmax and LayerNorm (typically applied before or after the block), approximating a distribution \(\mathcal{N}(0, 1)\). Thus, the deviation from \(I\) (value 1) is small and bounded.[1]
   </li>
   <li>
-    <b>Unboundedness of \(\mathcal{G}_l\):</b> The GELU output \(\mathcal{G}_l\) is located <i>inside</i> the FFN without an intermediate LayerNorm. Pre-trained ViTs exhibit "outlier" neurons with extremely large magnitudes (e.g., \(>10\)). The quadratic penalty \((\mathcal{G} - 1)^2\) amplifies these outliers significantly.
+    <b>Unboundedness of \(\mathcal{G}_l\):</b> The GELU output \(\mathcal{G}_l\) is located <i>inside</i> the FFN without an intermediate LayerNorm. Pre-trained ViTs exhibit "outlier" neurons with extremely large magnitudes (e.g., \(>10\)). The quadratic penalty \((\mathcal{G} - 1)^2\) amplifies these outliers significantly. [2,3]
   </li>
 </ol>
 
@@ -240,6 +240,14 @@ The gradient magnitude for \(\hat{m}^g\) is larger than that of \(\hat{m}^a\) by
   <li><b>Summation Scale:</b> The gradient for \(\hat{m}^g\) aggregates errors from a feature space that is <b>4 times larger</b> than that of \(\hat{m}^a\).</li>
   <li><b>Signal Energy:</b> The term \((\mathcal{G}_l - I)\) contains high-energy outliers characteristic of FFN intermediate layers, whereas \((\mathcal{A}_l - I)\) is constrained by the Softmax and LayerNorm mechanisms.</li>
 </ol>
+
+<p> 
+  [1] Darcet, Timothée, et al. "Vision transformers need registers." arXiv preprint arXiv:2309.16588 (2023).
+  <br>
+  [2] Bondarenko, Yelysei, Markus Nagel, and Tijmen Blankevoort. "Quantizable transformers: Removing outliers by helping attention heads do nothing." Advances in Neural Information Processing Systems 36 (2023): 75067-75096.
+  <br>
+  [3] Sun, Yuxuan, et al. "Flatquant: Flatness matters for llm quantization." arXiv preprint arXiv:2410.09426 (2024).
+</p>
 
 </body>
 </html>
