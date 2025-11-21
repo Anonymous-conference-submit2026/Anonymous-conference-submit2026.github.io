@@ -2,14 +2,14 @@
 <html>
 <head>
 <meta charset="utf-8">
-<title>Proposition 5 — Activation-Layer Pruning Effects</title>
+<title>Theorem 5 — Theoretical Analysis of Pruning Sensitivity and Recovery in DeiT</title>
 
-<!-- MathJax 配置：行内 \( \)，块级 $$ -->
+<!-- MathJax Configuration -->
 <script>
 window.MathJax = {
   tex: {
     inlineMath: [['\\(','\\)']],
-    displayMath: [['$$','$$'], ['\\[','\\]']]
+    displayMath: [['$$','$$'], ['\[','\]']]
   }
 };
 </script>
@@ -20,162 +20,220 @@ body {
   max-width: 900px;
   margin: auto;
   padding: 20px;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
   font-size: 18px;
-  line-height: 1.7;
+  line-height: 1.6;
+  color: #333;
 }
-h1, h2, h3 {
+h1 {
   margin-top: 40px;
+  font-size: 28px;
+  border-bottom: 2px solid #eaeaea;
+  padding-bottom: 10px;
 }
-hr { margin: 40px 0; }
+h2 {
+  margin-top: 35px;
+  font-size: 24px;
+  color: #444;
+}
+h3 {
+  margin-top: 30px;
+  font-size: 20px;
+  font-weight: bold;
+}
+p {
+  margin-bottom: 15px;
+  text-align: justify;
+}
+ul, ol {
+  margin-bottom: 20px;
+}
+li {
+  margin-bottom: 10px;
+}
+hr {
+  margin: 40px 0;
+  border: 0;
+  border-top: 1px solid #eee;
+}
+.theorem-box {
+  background-color: #f9f9f9;
+  border-left: 5px solid #333;
+  padding: 15px 20px;
+  margin: 20px 0;
+}
+.proof-step {
+  margin-left: 20px;
+  margin-bottom: 20px;
+}
+.proof-step-title {
+  font-weight: bold;
+  text-decoration: underline;
+  display: block;
+  margin-bottom: 5px;
+}
+.remark {
+  font-style: italic;
+  color: #555;
+  border-left: 3px solid #ccc;
+  padding-left: 10px;
+  margin-top: 10px;
+}
 </style>
-
 </head>
+
 <body>
 
-<h1><b>Proposition 5（Activation‑Layer Pruning Causes Larger but More Recoverable Accuracy Drop）</b></h1>
+<h1>Theorem 5 — Theoretical Analysis of Pruning Sensitivity and Recovery Dynamics</h1>
 
 <p>
-Consider the residual‑branch structure:
+Following the establishment of the gradient magnitude disparity in Theorem 4, we now extend the analysis to explain the empirical phenomenon observed during pruning:
 </p>
-
-$$
-x_{l+1}
-= x_l
-+ \mathcal{F}^2_{\theta_l}
-\circ \mathcal{G}
-\circ \mathcal{F}^1_{\theta_l}(x_l),
-$$
-
-<p>where:</p>
-<ul>
-  <li>\(\mathcal{F}^1, \mathcal{F}^2\) are linear projections,</li>
-  <li>\(\mathcal{G}\) is an activation module (e.g., GELU),</li>
-  <li>gradients satisfy Proposition 4:</li>
-</ul>
-
-$$
-\|\nabla_{\mathrm{gelu}}\|=\Theta(1),\qquad
-\|\nabla_{\mathrm{attn}}\| = O(10^{-3}\!\sim10^{-2}).
-$$
-
-<p>
-Then <b>pruning activation layers yields (i) a larger immediate accuracy drop, but (ii) significantly faster recovery during fine‑tuning</b>.
-</p>
+<ol>
+    <li><b>High Sensitivity of GELU:</b> Pruning GELU units causes a catastrophic drop in accuracy (70-80%).</li>
+    <li><b>Low Sensitivity of Attention:</b> Pruning Attention heads results in a minor drop (<10%).</li>
+    <li><b>Rapid Recovery:</b> Despite the massive initial drop, the GELU-pruned model recovers accuracy rapidly during fine-tuning, reaching parity with the Attention-pruned model.</li>
+</ol>
 
 <hr>
 
-<h1><b>Proof</b></h1>
-
-<p>We show two claims:  
-(1) the activation path dominates representational power → pruning it hurts more;  
-(2) its gradient scale is large → recovery is fast.
-</p>
-
-<h2><b>Claim 1. Activation layers contribute a larger share of the residual branch output</b></h2>
+<h2>1. Pruning Formulation</h2>
 
 <p>
-Define:
+Let us define pruning as applying a binary mask \( M \in \{0, 1\} \) to the output of the transformation. For theoretical simplicity, we model the "pruning" of a ratio \(\rho\) of the neurons/heads as setting the corresponding interpolation parameter \(\hat{m}\) to 0 (or removing the term entirely).
 </p>
 
-$$
-R_l(x_l) = \mathcal{F}^2_{\theta_l} \circ \mathcal{G} \circ \mathcal{F}^1_{\theta_l}(x_l).
-$$
-
-<p>
-By bounded norms of \(\mathcal{F}^1,\mathcal{F}^2\) and nonlinear amplification:
-</p>
-
-$$
-\|R_l(x_l)\| = \Theta(1).
-$$
-
-<p>
-In contrast, the attention branch is attenuated (softmax + \(1/\sqrt d\)):
-</p>
-
-$$
-\|R_l^{\mathrm{attn}}(x_l)\| = O(10^{-1}\!\sim10^{-2}).
-$$
-
-<p>
-Thus the activation branch contributes a <b>dominant portion</b> of the residual mapping:
-</p>
-
-$$
-\Delta_{\text{acc}}^{\mathrm{activation}} 
-\gg 
-\Delta_{\text{acc}}^{\mathrm{attn}}.
-$$
-
-<p><b>This explains the larger accuracy drop.</b></p>
+<p>Let \(\Delta \mathcal{L}\) denote the change in loss immediately after pruning (before any parameter update).</p>
 
 <hr>
 
-<h2><b>Claim 2. Activation layers recover faster because their gradients are 1–2 orders larger</b></h2>
+<h2>2. Theorem: Pruning Sensitivity</h2>
 
-<p>Let the pruned parameters be \(\theta^{(\mathrm{pruned})}\) and update step:</p>
+<div class="theorem-box">
+  <p><b>Theorem(Sensitivity Disparity).</b> 
+  Let \(\Delta \mathcal{L}_g\) and \(\Delta \mathcal{L}_a\) be the increase in loss induced by pruning a fraction \(\rho\) of the GELU  and Attention dimensions, respectively. Under the assumptions of Lemma 2 in <a href="./prof4.html">Prof 4</a>(Activation Statistics), we have:
+  </p>
+  $$
+  \mathbb{E}[\Delta \mathcal{L}_g] \gg \mathbb{E}[\Delta \mathcal{L}_a]
+  $$
+</div>
 
-$$
-\Delta\theta_t
-= -\eta \nabla_{\theta} \mathcal{L}_t.
-$$
+<p><b>Proof:</b></p>
 
-<p>From Proposition 4:</p>
+<div class="proof-step">
+  <span class="proof-step-title">Step 1: Taylor Expansion of the Loss</span>
+  <p>Consider the loss \(\mathcal{L}\) as a function of the layer output \(y\). A perturbation \(\Delta y\) caused by pruning leads to a change in loss, approximated by the first-order Taylor expansion:</p>
+  $$
+  \Delta \mathcal{L} \approx \nabla_y \mathcal{L} \cdot \Delta y
+  $$
+  <p>Squaring this (to analyze the magnitude of the error signal) gives \(\Delta \mathcal{L}^2 \propto ||\nabla_y \mathcal{L}||^2 ||\Delta y||^2 \cos^2\theta\). Assuming the gradient \(\nabla_y \mathcal{L}\) is independent of the specific pruning mask choice initially:</p>
+  $$
+  \mathbb{E}[\Delta \mathcal{L}] \propto \mathbb{E}[||\Delta y||]
+  $$
+  <p>Thus, the drop in accuracy (increase in loss) is dominated by the <b>magnitude of the signal removed</b>.</p>
+</div>
 
-$$
-\|\nabla_{\mathrm{gelu}}\|=\Theta(1), 
-\qquad
-\|\nabla_{\mathrm{attn}}\| = O(10^{-3}\!\sim10^{-2}),
-$$
+<div class="proof-step">
+  <span class="proof-step-title">Step 2: Magnitude of Removed Signal (GELU)</span>
+  <p>When pruning GELU neurons, we remove entries from \(\mathcal{G}_l\). Recall from <b>Lemma 2</b> that \(\mathcal{G}_l\) contains "outlier" neurons with values \(K \gg 1\). Pruning these neurons removes a vector \(\Delta y_g\) with extremely high norm.</p>
+  $$
+  ||\Delta y_g||^2 \approx \sum_{k \in \text{pruned}} (\mathcal{G}_{ik})^2 \approx \rho \cdot 4d \cdot \mathbb{E}[\mathcal{G}^2]
+  $$
+  <p>Since \(\mathcal{G}\) is heavy-tailed and unbounded, \(\mathbb{E}[\mathcal{G}^2]\) is very large.</p>
+</div>
 
-<p>Hence:</p>
+<div class="proof-step">
+  <span class="proof-step-title">Step 3: Magnitude of Removed Signal (Attention)</span>
+  <p>When pruning Attention heads, we remove entries from \(\mathcal{A}_l\). Recall that \(\mathcal{A}_l\) is the result of a Softmax operation and often a LayerNorm. Its values are bounded and distributed close to \(\mathcal{N}(0,1)\).</p>
+  $$
+  ||\Delta y_a||^2 \approx \sum_{j \in \text{pruned}} (\mathcal{A}_{ij})^2 \approx \rho \cdot d \cdot \mathbb{E}[\mathcal{A}^2]
+  $$
+  <p>Since \(\mathbb{E}[\mathcal{A}^2] \approx 1\) (normalized), the energy removed is small.</p>
+</div>
 
-$$
-\|\Delta\theta_t^{\mathrm{gelu}}\|
-= \Theta(\eta),
-\qquad
-\|\Delta\theta_t^{\mathrm{attn}}\|
-= O(10^{-3}\eta).
-$$
-
-<p>Therefore:</p>
-
-<ul>
-  <li>activation layers receive <b>full‑scale gradients</b>,</li>
-  <li>attention layers receive <b>tiny gradients</b>,</li>
-</ul>
-
-<p>yielding:</p>
-
-$$
-\frac{\|\Delta\theta_t^{\mathrm{gelu}}\|}
-{\|\Delta\theta_t^{\mathrm{attn}}\|}
-= \Omega(10^{1}\!-\!10^{2}).
-$$
-
-<p>
-Thus activation parameters <b>recover 10–100× faster</b>, explaining their easier fine‑tuning.
-</p>
+<div class="proof-step">
+  <span class="proof-step-title">Conclusion for Theorem</span>
+  <p>Comparing the two:</p>
+  $$
+  \frac{\mathbb{E}[||\Delta y_g||^2]}{\mathbb{E}[||\Delta y_a||^2]} \approx \frac{4d \cdot \text{Large}}{d \cdot 1} \gg 1
+  $$
+  <p>
+  The removal of high-magnitude outliers in the GELU creates a massive shift in the residual stream, pushing the subsequent layers into a non-optimal regime. This explains the 70-80% accuracy drop. Attention removal causes a minor perturbation, keeping the model near its local minimum.
+  </p>
+</div>
 
 <hr>
 
-<h1><b>Conclusion</b></h1>
-
-<p><b>Activation‑layer pruning:</b></p>
-<ul>
-  <li>removes a <b>functionally dominant</b> residual component → <b>large instant accuracy drop</b>,</li>
-  <li>but benefits from <b>large unattenuated gradients</b> → <b>rapid recovery</b>.</li>
-</ul>
-
-<p><b>Attention‑layer pruning:</b></p>
-<ul>
-  <li>removes a <b>weaker</b> component → <b>small instant drop</b>,</li>
-  <li>but receives <b>tiny gradients</b> → <b>slow recovery</b>.</li>
-</ul>
+<h2>3. Theorem: Recovery Dynamics</h2>
 
 <p>
-This establishes that activation layers are <b>highly impactful but highly recoverable</b>,  
-in contrast to attention layers.
+We now explain why the GELU-pruned model recovers. We model the fine-tuning process as Gradient Descent steps.
+</p>
+
+<div class="theorem-box">
+  <p><b>Theorem (Gradient-Driven Recovery).</b> 
+  Let \(\mathcal{L}_t\) be the loss at fine-tuning step \(t\). The expected reduction in loss for the GELU parameters is significantly faster than for the Attention parameters, proportional to the ratio \(\mathcal{R}\) derived in Theorem 4.
+  </p>
+</div>
+
+<p><b>Proof:</b></p>
+
+<div class="proof-step">
+  <span class="proof-step-title">Step 1: Loss Reduction via Gradient Descent</span>
+  <p>Consider the update rule for a parameter \(\theta\) with learning rate \(\eta\): \(\theta_{t+1} = \theta_t - \eta \nabla_\theta \mathcal{L}_t\).</p>
+  <p>Using a first-order Taylor expansion, the change in loss after one step is:</p>
+  $$
+  \mathcal{L}_{t+1} \approx \mathcal{L}_t + (\nabla_\theta \mathcal{L}_t)^T (\theta_{t+1} - \theta_t) 
+  = \mathcal{L}_t - \eta ||\nabla_\theta \mathcal{L}_t||^2
+  $$
+  <p>The <b>rate of recovery</b> (loss decrease) is directly proportional to the squared norm of the gradient.</p>
+</div>
+
+<div class="proof-step">
+  <span class="proof-step-title">Step 2: Applying Theorem 4</span>
+  <p>From our previous proof (Theorem 4), we established that:</p>
+  $$
+  \mathbb{E}[||\nabla_{\hat{m}^g}||^2] \approx 4\gamma \cdot \mathbb{E}[||\nabla_{\hat{m}^a}||^2]
+  $$
+  <p>where \(4\gamma \gg 1\).</p>
+</div>
+
+<div class="proof-step">
+  <span class="proof-step-title">Step 3: Comparative Dynamics</span>
+  <p>
+  <b>For the GELU case:</b> Although the initial loss \(\mathcal{L}_{start}\) is very high (due to Theorem 2), the gradient magnitude \(||\nabla_{\hat{m}^g}||\) is massive. This results in extremely large steps in the loss landscape, rapidly reducing the error. The outliers that were pruned created a "vacuum" that generates a strong error signal, forcing the remaining weights to adapt quickly to compensate.
+  </p>
+  <p>
+  <b>For the Attention case:</b> The initial loss is low, but the gradient magnitude \(||\nabla_{\hat{m}^a}||\) is also small. The recovery is slow, but since the starting point was already good, it requires little movement.
+  </p>
+</div>
+
+<div class="proof-step">
+  <span class="proof-step-title">Conclusion for Theorem</span>
+  <p>
+  The recovery curves intersect because the GELU pruning induces a "High Loss, High Gradient" regime, whereas Attention pruning induces a "Low Loss, Low Gradient" regime.
+  </p>
+  $$
+  \text{Recovery Rate (GELU)} \propto ||\nabla_g||^2 \gg ||\nabla_a||^2 \propto \text{Recovery Rate (Attn)}
+  $$
+  <p>
+  This mathematically justifies why the GELU accuracy "bounces back" to match the Attention accuracy after a short period of fine-tuning.
+  </p>
+</div>
+
+<hr>
+
+<h2>4. Unified Summary</h2>
+
+<p>The mathematical relationship between the two phenomena can be summarized as follows:</p>
+
+<ul>
+    <li><b>The Damage (Pruning):</b> Is governed by the <b>forward activation magnitude</b>. Since \(||\mathcal{G}|| \gg ||\mathcal{A}||\) (due to outliers), removing \(\mathcal{G}\) hurts more.</li>
+    <li><b>The Repair (Fine-tuning):</b> Is governed by the <b>backward gradient magnitude</b>. Since \(||\nabla_g|| \gg ||\nabla_a||\) (derived in Theorem 4), the repair mechanism works orders of magnitude faster for \(\mathcal{G}\).</li>
+</ul>
+
+<p class="remark">
+Note: This implies that while GELUs are statistically more "sensitivity" for preserving the immediate forward pass, they possess a higher degree of plasticity during training due to the amplified gradient signals.
 </p>
 
 </body>
