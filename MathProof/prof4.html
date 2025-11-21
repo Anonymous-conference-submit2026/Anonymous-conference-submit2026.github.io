@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="utf-8">
-<title>Proposition 4 — Gradient Gap Between Attention and Activation</title>
+<title>Theorem 4 — Theoretical Analysis of Gradient Magnitude Disparity in DeiT</title>
 
 <!-- MathJax 配置 -->
 <script>
@@ -20,206 +20,226 @@ body {
   max-width: 900px;
   margin: auto;
   padding: 20px;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
   font-size: 18px;
-  line-height: 1.7;
+  line-height: 1.6;
+  color: #333;
 }
-h1, h2, h3 {
+h1 {
   margin-top: 40px;
+  font-size: 28px;
+  border-bottom: 2px solid #eaeaea;
+  padding-bottom: 10px;
 }
-hr { margin: 40px 0; }
+h2 {
+  margin-top: 35px;
+  font-size: 24px;
+  color: #444;
+}
+h3 {
+  margin-top: 30px;
+  font-size: 20px;
+  font-weight: bold;
+}
+p {
+  margin-bottom: 15px;
+  text-align: justify;
+}
+ul, ol {
+  margin-bottom: 20px;
+}
+li {
+  margin-bottom: 10px;
+}
+hr {
+  margin: 40px 0;
+  border: 0;
+  border-top: 1px solid #eee;
+}
+.theorem-box {
+  background-color: #f9f9f9;
+  border-left: 5px solid #333;
+  padding: 15px 20px;
+  margin: 20px 0;
+}
+.proof-step {
+  margin-left: 20px;
+  margin-bottom: 20px;
+}
+.proof-step-title {
+  font-weight: bold;
+  text-decoration: underline;
+  display: block;
+  margin-bottom: 5px;
+}
 </style>
 </head>
 
 <body>
 
-<h1><b>Proposition 4（Gradient Gap Between Attention and Activation）</b></h1>
+<h1>Theorem 4 — Theoretical Analysis of Gradient Disparity in DeiT</h1>
 
 <p>
-Under the standard Vision Transformer assumptions A1–A4 (softmax concentration, bounded norms, 
-large hidden dimension, and multi‑head averaging), the back‑propagated gradients satisfy:
-</p>
-
-$$
-\|\nabla_{\mathrm{gelu}}\|=\Theta(1), \qquad
-\|\nabla_{\mathrm{attn}}\| = O(10^{-3}\!\sim10^{-4}),
-$$
-
-<p>and therefore</p>
-
-$$
-\boxed{
-\frac{\|\nabla_{\mathrm{gelu}}\|}{\|\nabla_{\mathrm{attn}}\|}
-= \Omega(10^{2}\!-\!10^{3})
-}
-$$
-
-<p>
-i.e., <b>attention gradients are inherently 2–3 orders of magnitude smaller than GELU gradients</b>.
+In this section, we formally establish the theoretical basis for the significant disparity in gradient magnitudes between the Gelu activation and Attention interpolation parameters in a pre-trained DeiT model.
 </p>
 
 <hr>
 
-<h1><b>Assumptions</b></h1>
+<h2>1. Problem Formulation and Notation</h2>
 
-<h2><b>A1. Softmax concentration</b></h2>
+<p>
+Let us define the transformations inserted into the \(l\)-th layer. Let \(x \in \mathbb{R}^{N \times d}\) denote the input tokens, where \(N\) is the sequence length and \(d\) is the embedding dimension.
+</p>
 
-<p>For each attention row \(\,(A_i=\mathrm{softmax}(z_i))\):</p>
-
-$$
-A_{i^*j}=O(1),\qquad
-A_{ij}=O(10^{-2}\!\sim10^{-3}) \ (i\ne i^*).
-$$
-
-<p>This implies Jacobian terms \(s_i s_j = O(10^{-4}\!\sim10^{-6})\).</p>
-
-<hr>
-
-<h2><b>A2. Bounded feature and weight norms</b></h2>
-
-$$
-\|x_i\| = \Theta(1),\qquad
-\|W_Q\|,\|W_K\|,\|W_V\|,\|W_1\|,\|W_2\| = O(1).
-$$
-
-<p>No gradient amplification occurs in either attention or MLP layers.</p>
-
-<hr>
-
-<h2><b>A3. Large hidden dimension</b></h2>
-
-$$
-d \gg 1,\quad \text{e.g., } d = 768.
-$$
-
-<p>Thus \(1/\sqrt d = O(10^{-2})\).</p>
-
-<hr>
-
-<h2><b>A4. Multi‑head averaging</b></h2>
-
-$$
-\mathrm{MHA}(X)=\frac{1}{H}\sum_{h=1}^H \mathrm{Attn}_h(X)W_o^{(h)},\qquad
-H=12.
-$$
-
-<p>This introduces a gradient factor \(1/H = O(10^{-1})\).</p>
-
-<hr>
-
-<h1><b>Proof</b></h1>
-
-<h2><b>Step 1. Softmax Jacobian suppression</b></h2>
-
-<p>By A1:</p>
-
-$$
-\Big\|\frac{\partial\,\mathrm{softmax}}{\partial z}\Big\|
-= O(10^{-2}\!-\!10^{-3}),
-$$
-
-$$
-\|g_Z\|\le O(10^{-2}\!-\!10^{-3})\|g\|.
-$$
-
-<p>This is the <b>first suppression</b>.</p>
-
-<hr>
-
-<h2><b>Step 2. QK‑scaling suppression</b></h2>
-
-$$
-Z=\frac{QK^\top}{\sqrt d},
-$$
-
-<p>so:</p>
-
-$$
-\|\nabla_Q\|,\|\nabla_K\|
-\le \frac{1}{\sqrt d}\|\nabla_Z\|
-= O(10^{-1})\|\nabla_Z\|.
-$$
-
-<p>The <b>second suppression</b>.</p>
-
-<hr>
-
-<h2><b>Step 3. Multi‑head averaging suppression</b></h2>
-
-$$
-\nabla_h = \frac{1}{H} \nabla_{\mathrm{mha}} W_o^\top,
-$$
-
-$$
-\|\nabla_h\|
-=O(10^{-1})\|\nabla_{\mathrm{mha}}\|.
-$$
-
-<p>The <b>third suppression</b>.</p>
-
-<hr>
-
-<h2><b>Step 4. Combine suppressions (attention path)</b></h2>
-
-$$
-\|\nabla_{\mathrm{attn}}\|
-\le
-O(10^{-2}\!-\!10^{-3})
-\times O(10^{-1})
-\times O(10^{-1})
-=
-O(10^{-4}\!-\!10^{-3}).
-$$
-
-<p>Empirically: \(10^{-3}\)–\(10^{-2}\).</p>
-
-<hr>
-
-<h2><b>Step 5. GELU path contains no shrinking factors</b></h2>
-
-<p>GELU derivative:</p>
-
-$$
-\sigma'(x)=\Phi(x)+x\phi(x)\in[0.8,3.6].
-$$
-
-<p>Weights are \(O(1)\). Thus:</p>
-
-$$
-\|\nabla_{\mathrm{gelu}}\|=\Theta(1).
-$$
-
-<p>No softmax, no \(1/\sqrt d\), no multi‑head averaging.</p>
-
-<hr>
-
-<h2><b>Step 6. Final ratio</b></h2>
-
-$$
-\frac{\|\nabla_{\mathrm{gelu}}\|}{\|\nabla_{\mathrm{attn}}\|}
-=
-\frac{\Theta(1)}{O(10^{-4}\!-\!10^{-3})}
-=
-\Omega(10^{2}\!-\!10^{3}).
-$$
-
-<hr>
-
-<h1><b>Conclusion</b></h1>
-
-<p>Attention gradients undergo three multiplicative suppressions:</p>
+<p>We define the outputs of the Attention mechanism and the GELU activation within the FFN block as follows:</p>
 
 <ul>
-  <li>softmax Jacobian: \(O(10^{-2}\!-\!10^{-3})\)</li>
-  <li>QK-scaling: \(O(10^{-1})\)</li>
-  <li>multi-head averaging: \(O(10^{-1})\)</li>
+  <li>\(\mathcal{A}_l \in \mathbb{R}^{N \times d}\): The output of the Multi-Head Self-Attention (MHSA) block (before the residual connection).</li>
+  <li>\(\mathcal{G}_l \in \mathbb{R}^{N \times 4d}\): The output of the GELU activation function inside the Feed-Forward Network (FFN). Note that the FFN hidden dimension is typically \(4d\).</li>
 </ul>
 
-<p>GELU gradients undergo <b>none</b> of these.</p>
+<p>The proposed interpolation transformations are:</p>
+
+$$
+h(\mathcal{A}_l) = \hat{m}_l^a \circ \mathcal{A}_l + (1 - \hat{m}_l^a) \circ I
+$$
+$$
+h(\mathcal{G}_l) = \hat{m}_l^g \circ \mathcal{G}_l + (1 - \hat{m}_l^g) \circ I
+$$
+
+<p>Where:</p>
+<ul>
+  <li>\(\hat{m}_l^a, \hat{m}_l^g \in \mathbb{R}\) are binary parameters to control the interpolation and its gradient will pass to the learnable parameters</li>
+  <li>\(I\) denotes the Identity matrix matching the dimensions of the respective inputs.</li>
+  <li>\(\circ\) denotes the Hadamard (element-wise) product.</li>
+</ul>
+
+<p>Let \(\mathcal{L}\) be the global loss function. We aim to prove that \(||\nabla_{\hat{m}^g}|| \gg ||\nabla_{\hat{m}^a}||\).</p>
+
+<hr>
+
+<h2>2. Assumptions and Lemmas</h2>
 
 <p>
-Therefore, the <b>gradient magnitude disparity</b> between attention and MLP activations is a 
-<b>structural property</b> of the ViT block.
+To proceed with the proof, we formalize the statistical properties of the pre-trained model based on empirical observations in Transformer architectures.
 </p>
+
+<h3>Assumption 1 (Isotropic Gradient Distribution)</h3>
+<p>
+Let \(\delta^a = \frac{\partial \mathcal{L}}{\partial h(\mathcal{A}_l)}\) and \(\delta^g = \frac{\partial \mathcal{L}}{\partial h(\mathcal{G}_l)}\) be the back-propagated gradients at the output of the transformations. We assume that the entries of these gradient tensors are independent and identically distributed (i.i.d.) with zero mean and a comparable variance scale \(\sigma_\delta^2\).
+</p>
+<p>
+<i>Justification:</i> Both signals eventually merge into the same residual stream. In a pre-trained stable model, the gradient magnitude flowing through the main branches is roughly balanced.
+</p>
+
+<h3>Lemma 1 (Dimensionality Mismatch)</h3>
+<p>The number of elements in the FFN hidden layer is 4 times that of the Attention output.</p>
+$$
+\text{dim}(\mathcal{G}_l) = 4 \times \text{dim}(\mathcal{A}_l)
+$$
+
+<h3>Lemma 2 (Activation Statistics Disparity)</h3>
+<p>In a pre-trained DeiT, the second central moments of the activations satisfy:</p>
+$$
+\mathbb{E}[(\mathcal{G}_{ijk} - 1)^2] \gg \mathbb{E}[(\mathcal{A}_{ijk} - 1)^2]
+$$
+
+<p><i>Justification:</i></p>
+<ol>
+  <li>
+    <b>Boundedness of \(\mathcal{A}_l\):</b> The attention output is constrained by Softmax and LayerNorm (typically applied before or after the block), approximating a distribution \(\mathcal{N}(0, 1)\). Thus, the deviation from \(I\) (value 1) is small and bounded.
+  </li>
+  <li>
+    <b>Unboundedness of \(\mathcal{G}_l\):</b> The GELU output \(\mathcal{G}_l\) is located <i>inside</i> the FFN without an intermediate LayerNorm. Pre-trained ViTs exhibit "outlier" neurons with extremely large magnitudes (e.g., \(>10\)). The quadratic penalty \((\mathcal{G} - 1)^2\) amplifies these outliers significantly.
+  </li>
+</ol>
+
+<hr>
+
+<h2>3. Theorem and Proof</h2>
+
+<div class="theorem-box">
+  <p><b>Theorem 1.</b> Let \(\nabla_{\hat{m}^g}\) and \(\nabla_{\hat{m}^a}\) be the gradients of the loss \(\mathcal{L}\) with respect to the scalar parameters \(\hat{m}^g\) and \(\hat{m}^a\). Under Assumption 1 and Lemmas 1 & 2, the expected squared norm of the gradient for the GELU transformation is significantly larger than that of the Attention transformation:</p>
+  
+  $$
+  \frac{\mathbb{E}[||\nabla_{\hat{m}^g}||^2]}{\mathbb{E}[||\nabla_{\hat{m}^a}||^2]} \approx 4 \times \gamma, \quad \text{where } \gamma \gg 1
+  $$
+</div>
+
+<p><b>Proof:</b></p>
+
+<div class="proof-step">
+  <span class="proof-step-title">Step 1: Derive the Gradient Expressions</span>
+  <p>Using the chain rule, the gradients are:</p>
+  $$
+  \nabla_{\hat{m}^g} = \sum_{i=1}^{N} \sum_{k=1}^{4d} \delta^g_{ik} \cdot (\mathcal{G}_{ik} - 1)
+  $$
+  $$
+  \nabla_{\hat{m}^a} = \sum_{i=1}^{N} \sum_{j=1}^{d} \delta^a_{ij} \cdot (\mathcal{A}_{ij} - 1)
+  $$
+</div>
+
+<div class="proof-step">
+  <span class="proof-step-title">Step 2: Analyze the Expected Squared Norm (Energy)</span>
+  <p>
+    We calculate the expectation of the squared gradient norm. Assuming independence between the back-propagated gradient \(\delta\) and the forward activation, and using Assumption 1 (\(\mathbb{E}[\delta^2] = \sigma_\delta^2\)):
+  </p>
+  
+  <p>For the Attention layer (cross-terms vanish due to zero mean):</p>
+  $$
+  \mathbb{E}[||\nabla_{\hat{m}^a}||^2] = N \cdot d \cdot \sigma_\delta^2 \cdot \underbrace{\mathbb{E}[(\mathcal{A} - 1)^2]}_{M_{\mathcal{A}}}
+  $$
+  
+  <p>For the GELU layer (summation up to \(4d\)):</p>
+  $$
+  \mathbb{E}[||\nabla_{\hat{m}^g}||^2] = N \cdot 4d \cdot \sigma_\delta^2 \cdot \underbrace{\mathbb{E}[(\mathcal{G} - 1)^2]}_{M_{\mathcal{G}}}
+  $$
+</div>
+
+<div class="proof-step">
+  <span class="proof-step-title">Step 3: Calculate the Ratio</span>
+  <p>Let us define the ratio \(\mathcal{R}\):</p>
+  $$
+  \mathcal{R} = \frac{\mathbb{E}[||\nabla_{\hat{m}^g}||^2]}{\mathbb{E}[||\nabla_{\hat{m}^a}||^2]} 
+  = \frac{4 N d \sigma_\delta^2 M_{\mathcal{G}}}{N d \sigma_\delta^2 M_{\mathcal{A}}} 
+  = 4 \times \frac{M_{\mathcal{G}}}{M_{\mathcal{A}}}
+  $$
+</div>
+
+<div class="proof-step">
+  <span class="proof-step-title">Step 4: Magnitude Analysis (The \(\gamma\) factor)</span>
+  <p>According to Lemma 2, we define \(\gamma = M_{\mathcal{G}} / M_{\mathcal{A}}\).</p>
+  
+  <ul>
+    <li>
+      <b>For Attention (\(M_{\mathcal{A}}\)):</b> Assuming \(\mathcal{A} \approx \mathcal{N}(0, 1)\), then \(M_{\mathcal{A}} = \mathbb{E}[A^2] - 2\mathbb{E}[A] + 1 \approx 2\).
+    </li>
+    <li>
+      <b>For GELU (\(M_{\mathcal{G}}\)):</b> The distribution contains heavy tails. If we assume a mixture model where an outlier has value \(K \gg 1\) (e.g., \(K \in [10, 50]\)), the quadratic term \((K-1)^2\) dominates. For instance, if \(K=10\), then \((K-1)^2 = 81\). Thus, \(M_{\mathcal{G}} \gg 2\).
+    </li>
+  </ul>
+  
+  <p>Consequently, \(\gamma \gg 1\).</p>
+</div>
+
+<p><b>Conclusion:</b></p>
+$$
+\mathcal{R} = 4 \gamma \gg 1
+$$
+<p>
+The gradient magnitude for \(\hat{m}^g\) is larger than that of \(\hat{m}^a\) by a factor of <b>4</b> (due to dimension expansion) multiplied by <b>\(\gamma\)</b> (due to high-magnitude outliers in unnormalized GELU activations). This typically results in a difference of 1 to 2 orders of magnitude.
+</p>
+
+<hr>
+
+<h2>4. Summary</h2>
+
+<p>The significant difference in gradient magnitudes arises from two structural properties of the DeiT architecture:</p>
+
+<ol>
+  <li><b>Summation Scale:</b> The gradient for \(\hat{m}^g\) aggregates errors from a feature space that is <b>4 times larger</b> than that of \(\hat{m}^a\).</li>
+  <li><b>Signal Energy:</b> The term \((\mathcal{G}_l - I)\) contains high-energy outliers characteristic of FFN intermediate layers, whereas \((\mathcal{A}_l - I)\) is constrained by the Softmax and LayerNorm mechanisms.</li>
+</ol>
 
 </body>
 </html>
