@@ -1,61 +1,5 @@
 # Rebuttal Draft
 
-# Reviewer Dp35
-
-**We sincerely thank the reviewer for the positive assessment on soundness, presentation, contribution, and motivation.**  
-Your comments helped us clarify the cost comparison and strengthen the explanation of gradient disparity.
-
----
-
-## 1. Comparison of Training Cost
-
-Thank you for raising the concern regarding pruning cost.
-
-For depth pruning, the main baseline **NOSE** also adopts **iterative pruning with 400‑epoch finetuning**, which is identical to our training schedule.  
-Therefore, our method does **not** introduce extra training cost beyond established depth‑pruning pipelines.  
-
-We will additionally include a table comparing total finetuning costs across all baselines for completeness.
-
----
-
-## 2. Why Gradient Disparity Appears (and why it is structural rather than an artifact)
-
-Thank you for pointing out the need to clarify the origin of this disparity.
-
-### 2.1 The disparity comes from ViT’s architecture, not from the learnable importance parameters
-
-As shown in our formal statement  
-**[Proposition 4 — Gradient Gap Between Attention and Activation](https://anonconf2025.github.io/MathProof/prof4.html)**, 
-the ViT architecture inherently causes **2–3 orders of magnitude suppression** of attention gradients due to:
-
-- softmax Jacobian shrinking,  
-- QK scaling by \($1/\sqrt d$\),  
-- multi‑head averaging.
-
-In contrast, GELU paths contain **no such shrinking factors**, resulting in  
-$$
-\|\nabla_{\text{gelu}}\| = \Theta(1),\quad
-\|\nabla_{\text{attn}}\| = O(10^{-3} \text{–} 10^{-4}).
-$$
-
-
-Thus, the gradient disparity is **structural and universal** to standard ViT blocks.
-
-### 2.2 Why it becomes observable when adding importance parameters
-
-In native ViT, gradients are mixed through residual paths, making such disparity hard to measure directly.  
-When introducing learnable importance parameters, gradients toward different components become **explicitly comparable**, making the inherent disparity *visible* rather than *created* by the method.
-
-We will make this explanation more explicit in the revised version.
-
----
-
-## Final Acknowledgement
-
-We sincerely appreciate the reviewer’s positive comments on the writing quality and motivation.  
-Your feedback helped us significantly improve the clarity of our explanation regarding training cost and the structural nature of gradient disparity.
-
-
 
 # Reviewer Z6dS
 
@@ -206,7 +150,15 @@ This includes:
 - runtime overhead (<0.01 s for fitting)  
 - robustness experiments  
 - numeric example with DeiT‑B polynomial coefficients
+### 8. MAP Runtime and Memory Cost
 
+As summarized on the MAP webpage:
+
+- **Data collection:** ~7 hours (fast finetuning)  
+- **MAP regression:** <0.01 s (6 parameters, ~20 points)  
+- **Memory:** negligible (<1 MB for all samples)
+
+   Thus MAP adds *minimal overhead* compared to standard iterative finetuning.
 ---
 
 ## 7. More Experiments Beyond Classification
@@ -223,21 +175,8 @@ Due to compute limits, we could not include COCO detection, but BoundaryDPT is o
 
 ---
 
-## 8. MAP Runtime and Memory Cost
 
-As summarized on the MAP webpage:
-
-- **Data collection:** ~7 hours (fast finetuning)  
-- **MAP regression:** <0.01 s (6 parameters, ~20 points)  
-- **Memory:** negligible (<1 MB for all samples)
-
-Thus MAP adds *minimal overhead* compared to standard iterative finetuning.
-
----
-
-# Final Acknowledgement
-
-We thank the reviewer again for the constructive feedback and for recognizing the motivation and contributions of our work.  
+Finally, we thank the reviewer again for the constructive feedback and for recognizing the motivation and contributions of our work.  
 Your comments helped us significantly improve the clarity of Section 3, strengthen the theoretical justification for MAP, and better articulate the necessity of activation-layer pruning.
 
 We hope the revisions and explanations above address all concerns and improve the overall quality of the paper.
