@@ -11,89 +11,140 @@ Below we reorganize and refine our rebuttal with clearer logic, complete answers
 ## 1. Clarification of K in Eq. 3
 
 We apologize for the missing definition. 
-**K denotes the pruning budget**, i.e., the *number of layers to prune*. 
-Under $L$ total Transformer blocks, the budget constraint 
-$\tilde m_a + \tilde m_g = \frac{K}{L}$ 
-defines all feasible pruning‑ratio pairs. We will explicitly include this definition in the revision.
+$K$ is the sparsity constraint that determines the total number of layers, i.e., the sum of attention layers and activation function layers, to be retained after depth pruning.
 
 ---
 
 ## 2. How Observations Lead to Methodology
 
-We agree this part was unclear. We have reorganized Section 3 around *two observations* and *two corresponding challenges*, each directly motivating a component of our method.
+We thank the reviewer for pointing out the unclear connection between our observations and the motivation of our method. We revise Section 3 and Section 4 to make the causal chain explicit: **each observation reveals a type of heterogeneity, each heterogeneity induces a challenge, and these challenges directly motivate our design principles.**
 
-### Observation 1: Gradient Disparity  
+### We have the observation 1 Gradient disparity and it leads to the challenge 1 Failure of gradient-based importance.  
+- **Observation 1: Gradient disparity.**  Attention and activation‑function layers exhibit substantially different gradient scales during backpropagation.
 
-Attention layers and activation layers exhibit **2–3 orders of magnitude gradient gap**.  
-This is not caused by learnable importance parameters—it is a **structural property of ViTs**.  
-As formally shown in  
-**Proposition 4 — Gradient Gap Between Attention and Activation**,  
-attention gradients undergo three suppressions:
+- **Challenge 1: Failure of gradient‑based importance.**  This gradient heterogeneity biases cross‑type importance estimation, causing attention layers to dominate and leading to suboptimal joint pruning.
 
-- softmax Jacobian shrinkage \(O(10^{-2} \sim 10^{-3})\)  
-- \(1/\sqrt d\) QK‑scaling suppression \(O(10^{-1})\)  
-- multi-head averaging \(O(10^{-1})\)
+### We have the observation 2 Recovery asymmetry and it leads to the challenge 2 Failure of short-sighted metrics.  
+- **Observation 2: Recovery asymmetry.**  Pruning activation layers causes severe immediate accuracy drops but very fast recovery, whereas attention‑layer pruning causes mild drops but slow recovery.
 
-while GELU paths contain none of these shrinking factors.  
-Thus:
-\[
-\|\nabla_{\text{gelu}}\|=\Theta(1),\quad 
-\|\nabla_{\text{attn}}\|=O(10^{-3}\!-\!10^{-4}).
-\]
+- **Challenge 2: Failure of short‑sighted metrics.**  Metrics based only on immediate post‑pruning accuracy fail to reflect the final recovered accuracy and thus misjudge true layer importance.
 
-**Challenge 1:** Gradient‑based importance metrics become invalid for cross‑type ranking—attention layers always appear “small”.
+### Based on these two challenges, we derive the methodological motivations for our approach.  
+These challenges show that heterogeneity exists in both **training dynamics** and **recovery behaviors**, motivating two key principles:
 
-### Observation 2: Recovery Asymmetry  
+1. **Avoid cross‑type importance comparison** (to eliminate gradient‑induced bias).  
+2. **Evaluate pruning decisions using final recovered accuracy** (to account for recovery asymmetry).
 
-Pruning activation layers yields catastrophic initial accuracy drops but **very fast recovery**, while attention pruning shows mild initial drops but **slow recovery**.
+### Based on these design principles, we develop our two‑stage algorithm as follows.  
+BoundaryDPT is aligned with these principles:
 
-**Challenge 2:** Immediate post‑pruning accuracy (or other local metrics) fails to measure true pruning importance.
+- **Stage 1, Step 1:** A model‑accuracy predictor estimates *recovered accuracy* under different pruning ratios of the two layer types, implementing Principle 2 while avoiding cross‑type comparison (Principle 1).  
+- **Stage 1, Step 2:** Gradient‑based importance is applied **within each homogeneous group only**, fully satisfying Principle 1.  
+- **Stage 2:** Fine‑tuning and layer merging enable accuracy recovery and inference acceleration.
 
----
-
-### How These Observations Motivate Our Method
-
-**Step 1: MAP (Model Accuracy Predictor) addresses Challenge 2**  
-MAP predicts the *final* accuracy under any \((\tilde m_a, \tilde m_g)\), removing reliance on misleading instantaneous metrics.
-
-**Step 2: Gradient‑based importance used only *within* layer type addresses Challenge 1**  
-Once MAP determines separate pruning ratios for attention and activation layers, gradients are only compared *within* each type, avoiding the cross‑type gradient‑scale mismatch.
-
-This resolves both challenges and clarifies how the observations lead to BoundaryDPT.
+   
+This revision clearly shows how **observation → challenge → methodological motivation → design principle → algorithm** are connected, addressing the reviewer’s concern.
 
 ---
 
-## 3. Improved Presentation of Part 1
+## 3. Improved Presentation of Part 1 and Motivation for Activation-Layer Pruning
 
 We have rewritten Part 1 for clarity.  
 The revised structure is:
 
-1. **Why depth pruning matters**  
-   Depth pruning yields significantly higher speedup than width pruning.
+xxx
 
-2. **Why depth pruning fails in prior work**  
-   Not because granularity is too coarse, but because **heterogeneous components (attn/activation/linear) were not jointly pruned**.
+and based on this, we clarify the motivation for activation-layer pruning as follows.
 
-3. **The core architectural bottleneck: dimension mismatch**  
-   Removing linear layers disrupts tensor shapes; directly pruning attention + linear fails.
+xxx
 
-4. **Our key idea: prune activation layers**  
-   - Removes redundancy  
-   - Enables merging neighboring linear layers  
-   - Eliminates dimension mismatch  
-   - Allows true *joint* depth pruning
+reference: \section{Introduction}
+Vision Transformers (ViTs) \citep{50650,liu2021Swin,touvron2021going,han2021transformer,chen2021crossvit,li2022efficientformer,wang2022pvt} have demonstrated remarkable performance across various domains.  However, their large parameter counts and high computational costs lead to extended inference latency. Structured pruning \citep{he2023structured} is effective for model compression while maintaining hardware compatibility.
 
-5. **Our contributions**  
-   - First to reveal activation redundancy in ViT depth pruning  
-   - First to identify heterogeneity phenomena (gradient disparity & recovery asymmetry)  
-   - MAP-guided optimization (with full theoretical foundations)  
-   - New SOTA results on depth and depth‑width pruning
 
-This fully addresses your comments regarding structure and clarity.
+\textcolor{blue}{
+\textbf{Depth pruning and its limitation.} As a kind of structured prunign, depth pruning denotes removing entire layers from ViTs. 
+Compared to width pruning which only reduces channels or attention heads inside a layer, depth pruning delivers significantly higher speedups under equivalent sparsity budgets, as shown in Figure \ref{fig:combined_dp_latency_analysis} (a). 
+However, depth pruning typically incurs substantial accuracy degradation, especially with \textbf{aggressive layer removal}. 
+Consequently, comprehensive methods that integrate both width and depth pruning are also limited by the depth pruning challenges, resulting in suboptimal performance. 
+}
+% As shown in \textbf{Figure xx(a)}, under the same parameter pruning raito, depth pruning incurs significantly higher speedups than width pruning, which reduces channels or attention heads. However, it is generally recognized that depth pruning is notoriously difficult for accuracy recovery \textbf{especially with aggressive layer removal} since its pruning granularity is relatively larger than that of width pruning. Consequently, comprehensive methods that integrate both width and depth pruning are also limited by these depth pruning challenges, resulting in suboptimal performance. 
+
+\textcolor{blue}{
+\textbf{Joint depth pruning matters.} While prior research attributes the accuracy collapse in depth pruning to coarse granularity \citep{he2023structured,mao2017exploring}, we challenge this perspective. 
+Our analysis reveals that the true bottleneck lies in the neglect of joint pruning of different layers in a ViT by considering cross-layer heterogeneity. 
+As shown in Figure \ref{fig:tradeoff}, individually pruning attention layers or activation function layers leads to drastic accuracy drops at high pruning ratios. In contrast, joint pruning of these two types of layers with our method significantly enhances accuracy retention while maintaining efficiency.
+}
+% as the increase of pruning ratios, the accuracy of DeiT-base drops drastically in case only pruning attention layers or only activation layers. In contrast, joint pruning of this two types of layers with our proposed method significantly enhance the accuracy of ViTs under the same pruning ratio as pruning alone and incurs a more steady accuracy change.    
+
+
+
+% \begin{figure*}[h]
+% \centering
+% \includegraphics[width=0.65\textwidth]{AnonymousSubmission/LaTeX/figure/1_intro/depth_vs_width_pruning.pdf}
+% \caption{Speedup Comparsion: Depth Pruning vs Width Pruning}
+% \label{fig:depth_vs_width}
+% \end{figure*}
+
+\begin{figure*}[h]
+\centering
+\includegraphics[width=0.95\textwidth]{AnonymousSubmission/LaTeX/figure/1_intro/combined_dp_latency_analysis.pdf}
+\caption{ 
+\textcolor{blue}{
+Practical inference speed analysis of ViTs.  (a) Speedup comparsion: Depth pruning exhibits significantly higher speedup efficiency than width pruning.
+(b) Latency breakdown of ViTs.
+}
+}
+\label{fig:combined_dp_latency_analysis}
+\end{figure*}
+
+\textcolor{blue}{
+\textbf{Dimension mismatch hinders joint depth pruning.} As shown in Figure \ref{fig:combined_dp_latency_analysis} (b), the two most types of time-consuming layers in ViTs are attention layers and linear layers, which together account for over 50\% of total inference time. 
+While joint depth pruning of linear layers and attention layers is necessary, direct simultaneous removal may create \textit{dimension mismatch}. 
+As illustrated in \textbf{Figure \ref{fig:dim_mismatch}}, if the first linear layer of a feedforward network (FFN) block in ViTs is removed, the output tensor from the previous attention layer cannot be passed through the second linear layer in the FFN. Similarly, pruned second linear layers prevent the output tensor from passing through the subsequent attention layers. In a word, dimension mismatch renders jointly depth-pruned ViTs unworkable..         
+}
+
+\textbf{Our contribution.} To address the conundrums of accuracy recovery and dimension mismatch in depth pruning, our contributions are threefold: 
+
+
+
+% \begin{figure*}[h]
+% \centering
+% \includegraphics[width=0.75\textwidth]{AnonymousSubmission/LaTeX/figure/1_intro/vit_latency.pdf}
+% \caption{The latency of different componets in ViT}
+% \label{fig:latency_of_vit}
+% \end{figure*}
+
+\begin{figure*}[h]
+\centering
+\includegraphics[width=0.75\textwidth]{AnonymousSubmission/LaTeX/figure/1_intro/dim_mismatch.pdf}
+\caption{\textcolor{blue}{The visualization of dimensions mismatch.}}
+\label{fig:dim_mismatch}
+\end{figure*}
+\begin{itemize}
+\item  \textcolor{blue}{  \textbf{Joint depth pruning of attention and activation function layers is proposed.} }  
+In particular, we tackle dimension mismatch by removing activation function layers situated between two linear layers, which allows for the natural merging of those linear layers to reduce model depth while aligning the dimensions of attention layers.
+% We empirically prove that joint pruning of attention layers and activation function layer \textbf{constitutes a state-of-the-art strategy to enhance depth pruning performance}, as shown in Figure~\ref{fig:pareto}.
+Besides, to the best of our knowledge, we are the \textbf{first} to identify and mitigate the redundancy of the activation function layers during joint pruning in ViTs.  
+
+\item  \textcolor{blue}{ \textbf{ The heterogeneity in joint depth pruning is revealed and addressed. } } We identify two unique phenomena related to the heterogeneity in joint depth pruning: gradient disparity and recovery asymmetry. Such heterogeneity has never been examined in the literature. In light of this, we introduce BoundaryDPT, a two-stage method featuring a model accuracy predictor to manage heterogeneity.
+
+\item \textcolor{blue}{ \textbf{ Two key state-of-the-art records are established. } } With BoundaryDPT, the depth-pruned DeiT-base achieves up to 1.6x speedup while maintaining lossless accuracy, which is the state-of-the-art among depth pruning works. More importantly, building on BoundaryDPT, we further present BoundaryDPT+, a depth-width pruning pipeline that \textbf{establishes a new state-of-the-art benchmark for extreme ViT compression}, as demonstrated in Figure \ref{fig:pareto}. BoundaryDPT+ enhances the ViT inference speedup from 4.60x to 5.44x for the Isomorphic-Pruning-2.6G configuration while achieving near-lossless accuracy.   
+\end{itemize}
+\begin{figure*}[h]
+\centering
+\includegraphics[width=1.0\textwidth]{AnonymousSubmission/LaTeX/figure/1_intro/overview.pdf}
+\caption{
+The complete methodological framework of BoundaryDPT and BoundaryDPT+, involving the research goals, key insights, contributions, and results.
+}
+% \caption{Overview of BoundaryDPT and BoundaryDPT+, a two-stage methodology for joint pruning, which is to fully unleash the potential of the depth pruning for an enhanced accuracy-speedup Pareto frontier}
+\label{fig:overview}
+\end{figure*}
+
 
 ---
 
-## 4. Motivation for Activation-Layer Pruning
+## 4. 
 
 We emphasize activation pruning not for novelty alone, but because:
 
